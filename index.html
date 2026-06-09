@@ -744,6 +744,7 @@ function doLogin(){
       APP.profiles = profiles || {};
       updateLastUploadInfo();
       renderAll();
+      startPolling(); // Запускаем автоматическую проверку обновлений
     }).catch(e=>{
       console.error('Load error:', e);
       // Fallback на localStorage
@@ -752,10 +753,16 @@ function doLogin(){
         if(saved){ const parsed=JSON.parse(saved); if(parsed?.shops?.length>0) APP.data=parsed; }
       } catch(e2){}
       renderAll();
+      startPolling(); // Запускаем автоматическую проверку обновлений
     });
   } else { _id('login-err').textContent='Неверный логин или пароль'; }
 }
-function doLogout(){ _id('login-screen').style.display='flex'; _id('app').style.display='none'; _id('l-pass').value=''; }
+function doLogout(){ 
+  stopPolling(); // Останавливаем проверку при выходе
+  _id('login-screen').style.display='flex'; 
+  _id('app').style.display='none'; 
+  _id('l-pass').value=''; 
+}
 
 // ═══════════════════════════════════════════════
 // NAV
@@ -1088,7 +1095,7 @@ function shopTableHtml(shops){
       <th>Код</th><th>Магазин</th><th>Бренд</th><th>Куратор</th>
       ${METRIC_DEFS.map(d=>`<th><div style="font-weight:700">${d.label}</div><div style="font-size:9px;opacity:.6;font-weight:600;margin-top:1px">% · план · факт</div></th>`).join('')}
       <th>ВМП</th>
-    </tr></thead><tbody>${rows}</tbody>
+    </table></thead><tbody>${rows}</tbody>
   </table></div>`;
 }
 
@@ -1320,7 +1327,7 @@ function renderRatingPage(pageElId, arr, title){
         const cls=c>=1?'cpill-ok':c>=0.8?'cpill-mid':'cpill-bad';
         return `<td><span class="cpill ${cls}">${pc2}%</span><div style="font-size:9px;color:var(--muted);margin-top:2px">место ${p.places[i]||'—'}</div></td>`;
       }).join('');
-      return `<tr>
+      return `<td>
         <td class="rank-col"><span class="${rc}">${p.rank}</span></td>
         <td><div class="name-cell">
           ${avatarHtml(p.name,34)}
@@ -1507,7 +1514,7 @@ function shopTableWithRatingHtml(shops, sortKey, sortDir, pageId){
       </th>
       ${metricThs}
       <th class="rth-sortable ${sortKey==='vmp'?(sortDir===1?'asc':'desc'):''}" onclick="__shopColSort_${pageId}('vmp')">ВМП</th>
-    </tr></thead>
+    </table></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 }
@@ -1569,7 +1576,7 @@ function shopTableHtml(shops, sortKey, sortDir, pageId){
     </th>`).join('');
 
   return `<div class="metric-table-wrap"><table class="metric-table">
-    <thead><tr>
+    <thead></tr>
       ${thS('kod','Код')}
       ${thS('name','Магазин')}
       <th>Бренд</th><th>Куратор</th>
@@ -2434,6 +2441,63 @@ function genPersonSection_shops(curatorName, myShops){
   ctx.fillText(`Сформировано: ${new Date().toLocaleString('ru-RU')} · МАКСИМУС`, 24, y+16);
   RPT.download(canvas,`магазины_${curatorName.split(' ')[0]}_${new Date().toLocaleDateString('ru-RU').replace(/\./g,'-')}`);
 }
+
+// ============================================
+// АВТОМАТИЧЕСКАЯ ПРОВЕРКА ОБНОВЛЕНИЙ (POLLING)
+// ============================================
+let lastUpdateTimestamp = null;
+let pollingInterval = null;
+
+async function checkForUpdates() {
+  if (!APP.data || !APP.data.shops) return;
+  
+  try {
+    const cloudData = await DB.loadData();
+    if (!cloudData || !cloudData.data) return;
+    
+    const cloudTimestamp = new Date(cloudData.uploaded_at).getTime();
+    
+    if (lastUpdateTimestamp === null) {
+      lastUpdateTimestamp = cloudTimestamp;
+      return;
+    }
+    
+    if (cloudTimestamp > lastUpdateTimestamp) {
+      console.log('Обнаружены новые данные! Обновляем...');
+      APP.data = cloudData.data;
+      localStorage.setItem('mx_data', JSON.stringify(cloudData.data));
+      localStorage.setItem('mx_last_upload_ts', cloudTimestamp.toString());
+      renderAll();
+      updateLastUploadInfo();
+      
+      // Показываем уведомление
+      const notification = document.createElement('div');
+      notification.style.cssText = 'position:fixed; bottom:20px; right:20px; background:var(--card); border-left:4px solid var(--accent2); padding:12px 20px; border-radius:12px; z-index:9999; font-size:13px; font-weight:600; color:var(--white); box-shadow:0 8px 32px rgba(0,0,0,0.3)';
+      notification.innerHTML = '📊 Данные обновлены!';
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+      
+      lastUpdateTimestamp = cloudTimestamp;
+    }
+  } catch (error) {
+    console.warn('Ошибка проверки обновлений:', error);
+  }
+}
+
+function startPolling() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  pollingInterval = setInterval(checkForUpdates, 30000);
+  console.log('✅ Автопроверка обновлений запущена (каждые 30 сек)');
+}
+
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+    console.log('⏸ Автопроверка обновлений остановлена');
+  }
+}
+
 function renderAll(){
   renderHome();
   renderRatingPage('page-curators',APP.data.ratings.curators,'Рейтинг кураторов');
