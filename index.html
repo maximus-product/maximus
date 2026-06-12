@@ -560,8 +560,8 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
     </div>
     
     <input class="login-input" id="l-user" type="text" placeholder="Логин" autocomplete="username">
-    <input class="login-input" id="l-pass" type="password" placeholder="Пароль" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">Войти</button>
+    <input class="login-input" id="l-pass" type="password" placeholder="Пароль" autocomplete="current-password" id="l-pass-field">
+    <button class="login-btn" id="login-btn">Войти</button>
     <div class="login-err" id="login-err"></div>
   </div>
 </div>
@@ -2812,6 +2812,15 @@ function renderAll(){
   renderShopsPage('mmb');
   renderProfiles();
 }
+
+// ── Login event listeners (добавляем после загрузки DOM) ──
+document.addEventListener('DOMContentLoaded', function() {
+  const loginBtn = document.getElementById('login-btn');
+  if(loginBtn) loginBtn.addEventListener('click', function(){ doLogin(); });
+  
+  const passField = document.getElementById('l-pass') || document.getElementById('l-pass-field');
+  if(passField) passField.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+});
 </script>
 </body>
 </html>
