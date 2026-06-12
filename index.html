@@ -3036,6 +3036,122 @@ function genTopkRatingReport(staffList, title){
     const dateStr = new Date().toLocaleDateString('ru-RU').replace(/\./g, '-');
     RPT.download(canvas, 'рейтинг_' + title.toLowerCase().replace(/ /g, '_') + '_' + dateStr);
 }
+// ═══════════════════════════════════════════════
+// ОТЧЁТЫ ПО МАГАЗИНАМ (Т2/ММБ — топ/антитоп)
+// ═══════════════════════════════════════════════
+function genShopsReportFiltered(pageId, metricKey, type){
+    console.log('genShopsReportFiltered called:', pageId, metricKey, type);
+    
+    const METRIC_MAP = {
+        'settings':  {label:'Настройки',     key:'settings',   color:'#38ffb0'},
+        'credit':    {label:'Кредит',        key:'credit',     color:'#2d8cff'},
+        'vmp':       {label:'ВМП',           key:'vmp',        color:'#ffc847'},
+        'sto':       {label:'СТО',           key:'sto',        color:'#00d4ff'},
+        'insurance': {label:'Страховки',     key:'insurance',  color:'#a78bfa'},
+        'revenue':   {label:'Выручка',       key:'revenue',    color:'#2d8cff'},
+        'aks':       {label:'Аксессуары',    key:'aks',        color:'#38ffb0'},
+        'rating':    {label:'Рейтинг',       key:'rating',     color:'#8b5cf6'}
+    };
+    
+    const metric = METRIC_MAP[metricKey];
+    if(!metric){ alert('Неизвестный тип отчёта: '+metricKey); return; }
+    
+    // Фильтруем магазины по бренду
+    const brand = pageId==='t2' ? 'Т2' : 'ММБ';
+    let shops = APP.data.shops.filter(s => s.brand === brand);
+    
+    // Считаем рейтинг для каждого магазина
+    shops = shops.map(s => ({
+        ...s,
+        ratingPct: shopRatingPct(s),
+        metricPct: metricKey==='rating' ? shopRatingPct(s) : 
+                   metricKey==='vmp' ? Math.round((s.vmp||0)*100) :
+                   (s[metric.key]?.plan > 0 ? Math.round(s[metric.key].forecast / s[metric.key].plan * 100) : 0)
+    }));
+    
+    // Сортировка
+    const isTop = type === 'top';
+    shops.sort((a,b) => isTop ? b.metricPct - a.metricPct : a.metricPct - b.metricPct);
+    
+    // Берём топ 20
+    const top20 = shops.slice(0, 20);
+    
+    // Генерируем Canvas
+    const W = 900;
+    const ROW_H = 48;
+    const H = 100 + 40 + ROW_H * (top20.length + 1) + 50;
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    
+    // Фон
+    ctx.fillStyle = '#060c1a';
+    ctx.fillRect(0, 0, W, H);
+    
+    // Шапка
+    const title = (isTop ? 'ТОП 20' : 'АНТИТОП 20') + ' · ' + metric.label + ' · ' + brand;
+    let y = RPT.drawHeader(ctx, W, title, 'сортировка по % прогноза ' + (isTop ? '↓' : '↑'));
+    
+    // Подзаголовок
+    ctx.font = '12px Arial';
+    ctx.fillStyle = '#5a7399';
+    ctx.fillText('Магазины бренда ' + brand + ' · Прогноз / План / Факт', 24, y + 20);
+    y += 36;
+    
+    // Колонки
+    const COLS = [
+        {label: '#', w: 50},
+        {label: 'Код', w: 80},
+        {label: 'Магазин', w: 220},
+        {label: 'Куратор', w: 180},
+        {label: '% прогноза', w: 110},
+        {label: 'Прогноз', w: 110},
+        {label: 'План', w: 100},
+        {label: 'Факт', w: 100},
+        {label: '', w: 50}
+    ];
+    
+    RPT.drawTableRow(ctx, W, y, COLS, true);
+    y += ROW_H;
+    
+    // Строки
+    top20.forEach((s, i) => {
+        const rankColors = ['#ffc847', '#c0c0c0', '#cd7f32'];
+        const rColor = i < 3 ? rankColors[i] : '#c8ddf5';
+        const pctColor = s.metricPct >= 100 ? '#38ffb0' : s.metricPct >= 80 ? '#ffc847' : '#ff4d6d';
+        
+        const m = s[metric.key] || {plan:0, fact:0, forecast:0};
+        
+        const cols = [
+            {value: String(i+1), bold: true, color: rColor},
+            {value: s.kod, align: 'left', bold: true, color: '#eaf2ff'},
+            {value: s.name.length > 25 ? s.name.slice(0,25)+'...' : s.name, align: 'left', color: '#c8ddf5'},
+            {value: s.curator.split(' ').slice(0,2).join(' '), color: '#5a7399'},
+            {value: s.metricPct + '%', bold: true, color: pctColor},
+            {value: RPT.fmt(m.forecast), bold: true, color: '#eaf2ff'},
+            {value: RPT.fmt(m.plan), color: '#5a7399'},
+            {value: RPT.fmt(m.fact), color: pctColor},
+            {value: '', w: 50}
+        ].map((col, ci) => ({...col, w: COLS[ci].w}));
+        
+        y = RPT.drawTableRow(ctx, W, y, cols, false, s.metricPct);
+        
+        // Прогресс-бар
+        RPT.drawBar(ctx, 50 + 80 + 220 + 180, y - 10, 110 + 110 + 100 + 100, s.metricPct, 10);
+    });
+    
+    // Футер
+    y += 14;
+    ctx.font = '11px Arial';
+    ctx.fillStyle = '#5a7399';
+    ctx.fillText('Сформировано: ' + new Date().toLocaleString('ru-RU') + ' · МАКСИМУС Sales Intelligence', 24, y + 16);
+    
+    // Скачивание
+    const dateStr = new Date().toLocaleDateString('ru-RU').replace(/\./g, '-');
+    const typeStr = isTop ? 'top20' : 'bot20';
+    RPT.download(canvas, metric.label.replace(/ /g, '_') + '_' + brand.replace(/ /g, '') + '_' + typeStr + '_' + dateStr);
+}
 </script>
 </body>
 </html>
