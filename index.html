@@ -1794,78 +1794,78 @@ function shopTableHtml(shops, sortKey, sortDir, pageId){
 // SHOPS PAGE (Т2 / ММБ)
 // ═══════════════════════════════════════════════
 function renderShopsPage(pageId){
-  const brand=pageId==='t2'?'Т2':'ММБ';
-  const el=_id('page-'+pageId);
-  const allShops=APP.data.shops.filter(s=>s.brand===brand);
-  let currentShops=[...allShops];
-  let sortKey='kod', sortDir=1;
-  let curatorFilter='all', searchQ='';
-
-  const curators=[...new Set(allShops.map(s=>s.curator))].sort();
-
-  function applyFilters(){
-    let list=[...allShops];
-    if(curatorFilter!=='all') list=list.filter(s=>s.curator===curatorFilter);
-    if(searchQ) list=list.filter(s=>s.name.toLowerCase().includes(searchQ.toLowerCase())||s.kod.toLowerCase().includes(searchQ.toLowerCase()));
-    currentShops=list;
-  }
-
-  function refreshTable(){
-    const tbl=_id(`shop-tbl-${pageId}`);
-    if(tbl) tbl.innerHTML=shopTableHtml(currentShops, sortKey, sortDir, pageId);
-  }
-
-  const cBtns=['<button class="filter-btn active" onclick="__shopCurator_'+pageId+'(\'all\',this)">Все ('+allShops.length+')</button>',
+    const brand=pageId==='t2'?'Т2':'ММБ';
+    const el=_id('page-'+pageId);
+    const allShops=APP.data.shops.filter(s=>s.brand===brand);
+    let currentShops=[...allShops];
+    let sortKey='kod', sortDir=1;
+    let curatorFilter='all', searchQ='';
+    const curators=[...new Set(allShops.map(s=>s.curator))].sort();
+    
+    function applyFilters(){
+        let list=[...allShops];
+        if(curatorFilter!=='all') list=list.filter(s=>s.curator===curatorFilter);
+        if(searchQ) list=list.filter(s=>s.name.toLowerCase().includes(searchQ.toLowerCase())||s.kod.toLowerCase().includes(searchQ.toLowerCase()));
+        currentShops=list;
+    }
+    
+    function refreshTable(){
+        const tbl=_id(`shop-tbl-${pageId}`);
+        if(tbl) tbl.innerHTML=shopTableHtml(currentShops, sortKey, sortDir, pageId);
+    }
+    
+    const cBtns=['<button class="filter-btn active" onclick="__shopCurator_'+pageId+'(\'all\',this)">Все ('+allShops.length+')</button>',
     ...curators.map(c=>{
-      const cnt=allShops.filter(s=>s.curator===c).length;
-      const sh=c.split(' ').slice(0,2).join(' ');
-      return `<button class="filter-btn" data-c="${c}" onclick="__shopCurator_${pageId}('${c.replace(/'/g,"\\'")}',this)">${sh} (${cnt})</button>`;
+        const cnt=allShops.filter(s=>s.curator===c).length;
+        const sh=c.split(' ').slice(0,2).join(' ');
+        return `<button class="filter-btn" data-c="${c}" onclick="__shopCurator_${pageId}('${c.replace(/'/g,"\\'")}',this)">${sh} (${cnt})</button>`;
     })].join('');
-
-  const brandForReport = brand;
-  el.innerHTML=`
-    <div class="sec-hdr"><div class="sec-title">Магазины \${brand}</div><div class="sec-badge">\${allShops.length} точек</div><div class="sec-line"></div></div>
+    
+    el.innerHTML=`
+    <div class="sec-hdr"><div class="sec-title">Магазины ${brand}</div><div class="sec-badge">${allShops.length} точек</div><div class="sec-line"></div></div>
     <div class="filter-row">
-      \${cBtns}
-      <button class="report-btn" onclick="showReportMenu('shops_\${pageId}')">📄 Отчёты ▾</button>
-      <input class="search-input" placeholder="Поиск по коду / названию..." oninput="__shopSearch_\${pageId}(this.value)">
+    ${cBtns}
+    <button class="report-btn" onclick="showReportMenu('shops_${pageId}')">📄 Отчёты ▾</button>
+    <input class="search-input" placeholder="Поиск по коду / названию..." oninput="__shopSearch_${pageId}(this.value)">
     </div>
-    <div id="report-menu-shops_\${pageId}" class="report-menu" style="display:none">
-      <div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:2px 6px 6px;font-weight:700;width:100%">ТОП 20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','settings','top')">⚙️ Настройки топ20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','credit','top')">💳 Кредит топ20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','vmp','top')">📐 ВМП топ20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','sto','top')">📱 СТО топ20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','insurance','top')">🛡 Страховки топ20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','revenue','top')">💰 Выручка топ20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','aks','top')">🛍 Аксессуары топ20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','rating','top')">🏆 Рейтинг топ20</div>
-      <div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0;width:100%"></div>
-      <div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:2px 6px 6px;font-weight:700;width:100%">АНТИТОП 20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','settings','bot')" style="color:var(--red)">⚙️ Настройки антитоп20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','credit','bot')" style="color:var(--red)">💳 Кредит антитоп20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','vmp','bot')" style="color:var(--red)">📐 ВМП антитоп20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','sto','bot')" style="color:var(--red)">📱 СТО антитоп20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','insurance','bot')" style="color:var(--red)">🛡 Страховки антитоп20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','revenue','bot')" style="color:var(--red)">💰 Выручка антитоп20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','aks','bot')" style="color:var(--red)">🛍 Аксессуары антитоп20</div>
-      <div class="report-menu-item" onclick="genShopsReportFiltered('\${pageId}','rating','bot')" style="color:var(--red)">🏆 Рейтинг антитоп20</div>
+    <div id="report-menu-shops_${pageId}" class="report-menu" style="display:none">
+    <div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:2px 6px 6px;font-weight:700;width:100%">ТОП 20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','settings','top')">⚙️ Настройки топ20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','credit','top')">💳 Кредит топ20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','vmp','top')">📐 ВМП топ20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','sto','top')">📱 СТО топ20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','insurance','top')">🛡 Страховки топ20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','revenue','top')">💰 Выручка топ20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','aks','top')">🛍 Аксессуары топ20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','rating','top')">🏆 Рейтинг топ20</div>
+    <div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0;width:100%"></div>
+    <div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:2px 6px 6px;font-weight:700;width:100%">АНТИТОП 20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','settings','bot')" style="color:var(--red)">⚙️ Настройки антитоп20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','credit','bot')" style="color:var(--red)">💳 Кредит антитоп20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','vmp','bot')" style="color:var(--red)">📐 ВМП антитоп20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','sto','bot')" style="color:var(--red)">📱 СТО антитоп20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','insurance','bot')" style="color:var(--red)">🛡 Страховки антитоп20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','revenue','bot')" style="color:var(--red)">💰 Выручка антитоп20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','aks','bot')" style="color:var(--red)">🛍 Аксессуары антитоп20</div>
+    <div class="report-menu-item" onclick="genShopsReportFiltered('${pageId}','rating','bot')" style="color:var(--red)">🏆 Рейтинг антитоп20</div>
     </div>
-    <div id="shop-tbl-\${pageId}">\${shopTableHtml(currentShops, sortKey, sortDir, pageId)}</div>\`;
-
-  window[`__shopCurator_${pageId}`]=function(curator, btn){
-    document.querySelectorAll(`#page-${pageId} .filter-btn`).forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    curatorFilter=curator; applyFilters(); refreshTable();
-  };
-  window[`__shopSearch_${pageId}`]=function(q){
-    searchQ=q; applyFilters(); refreshTable();
-  };
-  window[`__shopColSort_${pageId}`]=function(key){
-    if(sortKey===key) sortDir*=-1;
-    else{ sortKey=key; sortDir=(key==='kod'||key==='name')?1:-1; }
-    refreshTable();
-  };
+    <div id="shop-tbl-${pageId}">${shopTableHtml(currentShops, sortKey, sortDir, pageId)}</div>`;
+    
+    window[`__shopCurator_${pageId}`]=function(curator, btn){
+        document.querySelectorAll(`#page-${pageId} .filter-btn`).forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        curatorFilter=curator; applyFilters(); refreshTable();
+    };
+    
+    window[`__shopSearch_${pageId}`]=function(q){
+        searchQ=q; applyFilters(); refreshTable();
+    };
+    
+    window[`__shopColSort_${pageId}`]=function(key){
+        if(sortKey===key) sortDir*=-1;
+        else{ sortKey=key; sortDir=(key==='kod'||key==='name')?1:-1; }
+        refreshTable();
+    };
 }
 
 // ═══════════════════════════════════════════════
