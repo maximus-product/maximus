@@ -2559,64 +2559,63 @@ function genPersonReport(curatorName, section){
 }
 
 // Секция 1: Общее выполнение
+
 function genPersonSection_full(curatorName, myShops){
-  const SHOW=[
-    {key:'revenue',  label:'Выручка'},
-    {key:'sto',      label:'СТО'},
-    {key:'aks',      label:'Аксессуары'},
-    {key:'settings', label:'Настройки'},
-    {key:'insurance',label:'Страховки'},
-    {key:'credit',   label:'Кредит'},
-    {key:'services', label:'Услуги'},
-  ];
-  const W=860, ROW_H=46;
-  const H=96+40+ROW_H*(SHOW.length+1)+50;
-  const canvas=document.createElement('canvas');
-  canvas.width=W; canvas.height=H;
-  const ctx=canvas.getContext('2d');
-  ctx.fillStyle=RPT.BG; ctx.fillRect(0,0,W,H);
-
-  let y=RPT.drawHeader(ctx,W,`Выполнение планов · ${curatorName.split(' ')[0]}`,`${myShops.length} магазинов`);
-  ctx.font='12px Arial'; ctx.fillStyle=RPT.MUTED;
-  ctx.fillText('Прогноз / План / Факт по каждому направлению', 24, y+20); y+=36;
-
-  const COLS=[
-    {label:'Показатель', w:160},
-    {label:'% прогноза', w:100},
-    {label:'Прогноз',    w:120},
-    {label:'План',       w:120},
-    {label:'Факт',       w:110},
-    {label:'% факта',    w:90},
-    {label:'Прогресс',   w:160},
-  ];
-  RPT.drawTableRow(ctx,W,y,COLS,true); y+=ROW_H;
-
-  SHOW.forEach(m=>{
-    const plan=myShops.reduce((s,sh)=>s+(sh[m.key]?.plan||0),0);
-    const fact=myShops.reduce((s,sh)=>s+(sh[m.key]?.fact||0),0);
-    const fc=myShops.reduce((s,sh)=>s+(sh[m.key]?.forecast||0),0);
-    const fcPct=plan>0?Math.round(fc/plan*100):0;
-    const fPct=plan>0?Math.round(fact/plan*100):0;
-    const cols=[
-      {value:m.label, align:'left', bold:true, color:RPT.WHITE},
-      {value:fcPct+'%', bold:true, color:RPT.pctColor(fcPct)},
-      {value:RPT.fmt(fc), color:RPT.WHITE},
-      {value:RPT.fmt(plan), color:RPT.MUTED},
-      {value:RPT.fmt(fact), color:RPT.pctColor(fPct)},
-      {value:fPct+'%', color:RPT.pctColor(fPct)},
-      {value:'', w:160},
-    ].map((col,ci)=>({...col,w:COLS[ci].w}));
-    y=RPT.drawTableRow(ctx,W,y,cols,false,fcPct);
-    RPT.drawBar(ctx, 160+100+120+120+110+90, y-8, 150, fcPct, 8);
-  });
-
-  y+=14;
-  ctx.font='11px Arial'; ctx.fillStyle=RPT.MUTED;
-  ctx.fillText(`Сформировано: ${new Date().toLocaleString('ru-RU')} · МАКСИМУС`, 24, y+16);
-  RPT.download(canvas,`планы_${curatorName.split(' ')[0]}_${new Date().toLocaleDateString('ru-RU').replace(/\./g,'-')}`);
+    // Отчёт по магазинам куратора — структура как в таблице магазинов
+    const SHOW=[
+        {key:'revenue',  label:'Выручка'},
+        {key:'sto',      label:'СТО'},
+        {key:'aks',      label:'Аксессуары'},
+        {key:'settings', label:'Настройки'},
+        {key:'insurance',label:'Страховки'},
+        {key:'credit',   label:'Кредит'},
+        {key:'services', label:'Услуги'},
+    ];
+    const W=1200, ROW_H=44;
+    const H=96+40+ROW_H*(myShops.length+1)+50;
+    const canvas=document.createElement('canvas');
+    canvas.width=W; canvas.height=H;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle=RPT.BG; ctx.fillRect(0,0,W,H);
+    let y=RPT.drawHeader(ctx,W,`Выполнение планов · ${curatorName.split(' ')[0]}`,`${myShops.length} магазинов`);
+    ctx.font='12px Arial'; ctx.fillStyle=RPT.MUTED;
+    ctx.fillText('Прогноз / План / Факт по каждому магазину и направлению', 24, y+20); y+=36;
+    // Колонки: #, Код, Магазин, Бренд, затем по каждой метрике %пр
+    const COLS=[
+        {label:'#',        w:40},
+        {label:'Код',      w:70},
+        {label:'Магазин',  w:180},
+        {label:'Бренд',    w:55},
+    ];
+    SHOW.forEach(m=>{ COLS.push({label:m.label.slice(0,4)+' %', w:70}); });
+    COLS.push({label:'ВМП', w:60}, {label:'', w:40});
+    RPT.drawTableRow(ctx,W,y,COLS,true); y+=ROW_H;
+    // Сортировка по рейтингу магазина
+    const sorted=[...myShops].map(s=>({...s,rPct:shopRatingPct(s)})).sort((a,b)=>b.rPct-a.rPct);
+    sorted.forEach((s,i)=>{
+        const vmpPct=Math.round(s.vmp*100);
+        const cols=[
+            {value:String(i+1), color:i<3?['#ffc847','#c0c0c0','#cd7f32'][i]:RPT.MUTED},
+            {value:s.kod, align:'left', bold:true, color:RPT.WHITE},
+            {value:s.name.slice(0,24), align:'left', color:RPT.TEXT},
+            {value:s.brand, color:s.brand==='Т2'?RPT.BLUE:'#a78bfa'},
+        ];
+        SHOW.forEach(m=>{
+            const mm=s[m.key];
+            const pct=mm&&mm.plan>0?Math.round(mm.forecast/mm.plan*100):0;
+            cols.push({value:pct+'%', bold:true, color:RPT.pctColor(pct)});
+        });
+        cols.push({value:vmpPct+'%', bold:true, color:RPT.pctColor(vmpPct)});
+        cols.push({value:'', w:40});
+        const finalCols=cols.map((col,ci)=>({...col,w:COLS[ci].w}));
+        y=RPT.drawTableRow(ctx,W,y,finalCols,false,s.rPct);
+    });
+    y+=14;
+    ctx.font='11px Arial'; ctx.fillStyle=RPT.MUTED;
+    ctx.fillText(`Сформировано: ${new Date().toLocaleString('ru-RU')} · МАКСИМУС`, 24, y+16);
+    RPT.download(canvas,`планы_${curatorName.split(' ')[0]}_${new Date().toLocaleDateString('ru-RU').replace(/\./g,'-')}`);
 }
 
-// Секция 2: ВМП с разбивкой
 function genPersonSection_vmp(curatorName, myShops){
   const sorted=[...myShops].sort((a,b)=>b.vmp-a.vmp);
   const W=880, ROW_H=44;
@@ -2633,14 +2632,14 @@ function genPersonSection_vmp(curatorName, myShops){
   const COLS=[
     {label:'#',       w:40},
     {label:'Код',     w:75},
-    {label:'Магазин', w:175},
+    {label:'Магазин', w:220},
     {label:'Бренд',   w:58},
     {label:'ВМП коэф',w:85},
     {label:'Аксы %',  w:88},
     {label:'Настр %', w:88},
     {label:'Страх %', w:88},
-    {label:'Ср %',    w:75},
-    {label:'',        w:108},
+    {label:'Ср %',    w:90},
+    {label:'',        w:180},
   ];
   RPT.drawTableRow(ctx,W,y,COLS,true); y+=ROW_H;
 
@@ -2689,15 +2688,15 @@ function genPersonSection_shops(curatorName, myShops){
   const COLS=[
     {label:'#',       w:40},
     {label:'Код',     w:75},
-    {label:'Магазин', w:175},
+    {label:'Магазин', w:220},
     {label:'Бренд',   w:55},
     {label:'Рейтинг', w:80},
     {label:'СТО %',   w:80},
     {label:'Аксы %',  w:80},
     {label:'Кредит %',w:82},
     {label:'Услуги %',w:82},
-    {label:'Выручка %',w:85},
-    {label:'',        w:106},
+    {label:'Выручка %',w:100},
+    {label:'',        w:150},
   ];
   RPT.drawTableRow(ctx,W,y,COLS,true); y+=ROW_H;
 
