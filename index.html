@@ -562,8 +562,8 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
     </div>
     
     <input class="login-input" id="l-user" type="text" placeholder="Логин" autocomplete="username">
-    <input class="login-input" id="l-pass" type="password" placeholder="Пароль" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password" id="l-pass-field">
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Войти</button>
+    <input class="login-input" id="l-pass" type="password" placeholder="Пароль" autocomplete="current-password" id="l-pass-field">
+    <button class="login-btn" id="login-btn">Войти</button>
     <div class="login-err" id="login-err"></div>
   </div>
 </div>
@@ -2836,6 +2836,14 @@ if(sessionStorage.getItem('mx_auth')==='1'){
 document.getElementById('l-pass') && document.getElementById('l-pass').addEventListener('keydown',function(e){
   if(e.key==='Enter') doLogin();
 });
+
+// Привязываем кнопку входа после загрузки всего скрипта
+(function(){
+  var btn = document.getElementById('login-btn');
+  if(btn) btn.addEventListener('click', function(){ doLogin(); });
+  var pass = document.getElementById('l-pass');
+  if(pass) pass.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+})();
 </script>
 </body>
 </html>
