@@ -543,91 +543,7 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
 }
 </style>
 
-<script>
-// Ранняя инициализация login
-function doLogin(){
-  var u=document.getElementById('l-user').value.trim();
-  var p=document.getElementById('l-pass').value;
-  if(u==='maximussales'&&p==='Maximus2025'){
-    // Сохраняем сессию
-    sessionStorage.setItem('mx_auth','1');
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='flex';
-    var ph=document.getElementById('page-home');
-    if(ph){
-      ph.innerHTML='<div style="text-align:center;padding:80px 20px;color:#4e6a8a"><div style="margin:0 auto 20px;width:32px;height:32px;border:3px solid rgba(45,140,255,0.2);border-top-color:#2d8cff;border-radius:50%;animation:spin .7s linear infinite"></div><div style="font-size:14px">Загружаем данные...</div></div>';
-      document.querySelectorAll('.page').forEach(function(pg){pg.classList.remove('active');});
-      ph.classList.add('active');
-    }
-    // Ждём пока загрузятся APP и DB из основного скрипта
-    var attempts = 0;
-    function tryInit(){
-      attempts++;
-      if(typeof renderAll === 'function' && typeof DB !== 'undefined' && typeof APP !== 'undefined'){
-        // Всё готово — грузим данные
-        var localData = null;
-        try{var s=localStorage.getItem('mx_data');if(s){var d=JSON.parse(s);if(d&&d.shops&&d.shops.length>0)localData=d;}}catch(e){}
-        // Сначала показываем локальные данные если есть
-        if(localData){ APP.data=localData; renderAll(); }
-        // Параллельно грузим из Supabase
-        DB.loadData().then(function(cloudData){
-          if(cloudData&&cloudData.data&&cloudData.data.shops&&cloudData.data.shops.length>0){
-            APP.data=cloudData.data;
-            if(cloudData.uploaded_at) localStorage.setItem('mx_last_upload_ts', new Date(cloudData.uploaded_at).getTime().toString());
-          }
-          return DB.loadProfiles();
-        }).then(function(profiles){
-          APP.profiles=profiles||{};
-          if(typeof updateLastUploadInfo==='function') updateLastUploadInfo();
-          renderAll();
-        }).catch(function(e){
-          console.warn('Cloud load failed:', e);
-          if(!localData) renderAll();
-        });
-      } else if(attempts < 50){
-        setTimeout(tryInit, 100);
-      } else {
-        // Таймаут — рендерим с тем что есть
-        if(typeof renderAll==='function') renderAll();
-        else console.error('renderAll not found after 5s');
-      }
-    }
-    setTimeout(tryInit, 200);
-  } else {
-    var err=document.getElementById('login-err');
-    if(err) err.textContent='Неверный логин или пароль';
-  }
-}
-// Автовход если сессия сохранена
-window.addEventListener('load', function(){
-  if(sessionStorage.getItem('mx_auth')==='1'){
-    var ls = document.getElementById('login-screen');
-    var app = document.getElementById('app');
-    if(ls) ls.style.display='none';
-    if(app) app.style.display='flex';
-    var attempts=0;
-    function tryRender(){
-      attempts++;
-      if(typeof renderAll==='function'){
-        var localData=null;
-        try{var s=localStorage.getItem('mx_data');if(s){var d=JSON.parse(s);if(d&&d.shops&&d.shops.length>0)localData=d;}}catch(e){}
-        if(localData&&typeof APP!=='undefined') APP.data=localData;
-        renderAll();
-        if(typeof DB!=='undefined'){
-          DB.loadData().then(function(cd){
-            if(cd&&cd.data&&cd.data.shops&&cd.data.shops.length>0){
-              APP.data=cd.data;
-              renderAll();
-            }
-            return DB.loadProfiles();
-          }).then(function(pr){ APP.profiles=pr||{}; renderAll(); }).catch(function(){});
-        }
-      } else if(attempts<50){ setTimeout(tryRender,100); }
-    }
-    setTimeout(tryRender,300);
-  }
-});
-</script>
+
 </head>
 <body>
 
@@ -2865,6 +2781,60 @@ document.addEventListener('DOMContentLoaded', function() {
   
   const passField = document.getElementById('l-pass') || document.getElementById('l-pass-field');
   if(passField) passField.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+});
+
+
+// ═══════════════════════════════════════════════
+// ИНИЦИАЛИЗАЦИЯ ВХОДА
+// ═══════════════════════════════════════════════
+function doLogin(){
+  const u=_id('l-user').value.trim(), p=_id('l-pass').value;
+  if(u==='maximussales'&&p==='Maximus2025'){
+    sessionStorage.setItem('mx_auth','1');
+    _id('login-screen').style.display='none';
+    _id('app').style.display='flex';
+    _id('page-home').innerHTML='<div style="text-align:center;padding:80px 20px;color:var(--muted)"><div class="spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 20px"></div><div style="font-size:14px">Загружаем данные...</div></div>';
+    document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+    _id('page-home').classList.add('active');
+    _loadAppData();
+  } else {
+    _id('login-err').textContent='Неверный логин или пароль';
+  }
+}
+
+function _loadAppData(){
+  // Сначала локальные данные
+  try{
+    const s=localStorage.getItem('mx_data');
+    if(s){const d=JSON.parse(s);if(d&&d.shops&&d.shops.length>0){APP.data=d;renderAll();}}
+  }catch(e){}
+  // Потом облако
+  DB.loadData().then(cd=>{
+    if(cd&&cd.data&&cd.data.shops&&cd.data.shops.length>0){
+      APP.data=cd.data;
+      if(cd.uploaded_at) localStorage.setItem('mx_last_upload_ts',new Date(cd.uploaded_at).getTime().toString());
+    }
+    return DB.loadProfiles();
+  }).then(pr=>{
+    APP.profiles=pr||{};
+    updateLastUploadInfo();
+    renderAll();
+  }).catch(e=>{
+    console.warn('Cloud load failed:',e);
+    renderAll();
+  });
+}
+
+// Автовход при обновлении страницы
+if(sessionStorage.getItem('mx_auth')==='1'){
+  _id('login-screen').style.display='none';
+  _id('app').style.display='flex';
+  _loadAppData();
+}
+
+// Enter на поле пароля
+document.getElementById('l-pass') && document.getElementById('l-pass').addEventListener('keydown',function(e){
+  if(e.key==='Enter') doLogin();
 });
 </script>
 </body>
