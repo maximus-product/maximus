@@ -563,7 +563,7 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
     
     <input class="login-input" id="l-user" type="text" placeholder="Логин" autocomplete="username">
     <input class="login-input" id="l-pass" type="password" placeholder="Пароль" autocomplete="current-password" id="l-pass-field">
-    <button class="login-btn" id="login-btn">Войти</button>
+    <button class="login-btn" onclick="doLogin()">Войти</button>
     <div class="login-err" id="login-err"></div>
   </div>
 </div>
@@ -2802,35 +2802,7 @@ function doLogin(){
   }
 }
 
-function _loadAppData(){
-  // Сначала локальные данные
-  try{
-    const s=localStorage.getItem('mx_data');
-    if(s){const d=JSON.parse(s);if(d&&d.shops&&d.shops.length>0){APP.data=d;renderAll();}}
-  }catch(e){}
-  // Потом облако
-  DB.loadData().then(cd=>{
-    if(cd&&cd.data&&cd.data.shops&&cd.data.shops.length>0){
-      APP.data=cd.data;
-      if(cd.uploaded_at) localStorage.setItem('mx_last_upload_ts',new Date(cd.uploaded_at).getTime().toString());
-    }
-    return DB.loadProfiles();
-  }).then(pr=>{
-    APP.profiles=pr||{};
-    updateLastUploadInfo();
-    renderAll();
-  }).catch(e=>{
-    console.warn('Cloud load failed:',e);
-    renderAll();
-  });
-}
 
-// Автовход при обновлении страницы
-if(sessionStorage.getItem('mx_auth')==='1'){
-  _id('login-screen').style.display='none';
-  _id('app').style.display='flex';
-  _loadAppData();
-}
 
 // Enter на поле пароля
 document.getElementById('l-pass') && document.getElementById('l-pass').addEventListener('keydown',function(e){
@@ -2838,12 +2810,30 @@ document.getElementById('l-pass') && document.getElementById('l-pass').addEventL
 });
 
 // Привязываем кнопку входа после загрузки всего скрипта
-(function(){
-  var btn = document.getElementById('login-btn');
-  if(btn) btn.addEventListener('click', function(){ doLogin(); });
-  var pass = document.getElementById('l-pass');
-  if(pass) pass.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
-})();
+
+
+// Автовход если сессия активна
+if(sessionStorage.getItem('mx_auth')==='1'){
+  _id('login-screen').style.display='none';
+  _id('app').style.display='flex';
+  doLogin._autoLogin = true;
+  Promise.all([DB.loadData(), DB.loadProfiles()]).then(([cd,pr])=>{
+    if(cd&&cd.data&&cd.data.shops&&cd.data.shops.length>0){
+      APP.data=cd.data;
+      if(cd.uploaded_at) localStorage.setItem('mx_last_upload_ts',new Date(cd.uploaded_at).getTime().toString());
+    } else {
+      try{const s=localStorage.getItem('mx_data');if(s){const d=JSON.parse(s);if(d?.shops?.length>0)APP.data=d;}}catch(e){}
+    }
+    APP.profiles=pr||{};
+    updateLastUploadInfo();
+    renderAll();
+    startPolling();
+  }).catch(()=>{
+    try{const s=localStorage.getItem('mx_data');if(s){const d=JSON.parse(s);if(d?.shops?.length>0)APP.data=d;}}catch(e){}
+    renderAll();
+    startPolling();
+  });
+}
 </script>
 </body>
 </html>
