@@ -2147,6 +2147,16 @@ function parseWorkbook(wb){
     ratings.curators=filterByStaff(ratings.curators,staff.curators);
     ratings.zam=filterByStaff(ratings.zam,staff.zam);
     console.log('Рейтинги отфильтрованы:',ratings.topk.length+'топк,',ratings.curators.length+'кур.,',ratings.zam.length+'зам.');
+    // ═══════════════════════════════════════════════
+    // ФИЛЬТРАЦИЯ РЕЙТИНГОВ ПО РЕАЛЬНОМУ ЗАКРЕПЛЕНИЮ
+    // Оставляем только тех сотрудников, кто реально
+    // закреплён за магазинами в первой таблице
+    // ══════════════════════════════════════════════
+    const filterByStaff=(arr,staffArr)=>arr.filter(p=>staffArr.includes(p.name));
+    ratings.topk=filterByStaff(ratings.topk,staff.topk);
+    ratings.curators=filterByStaff(ratings.curators,staff.curators);
+    ratings.zam=filterByStaff(ratings.zam,staff.zam);
+    console.log('Рейтинги отфильтрованы:',ratings.topk.length+'топк,',ratings.curators.length+'кур.,',ratings.zam.length+'зам.');
     return{network,bештау:{total_sum:Math.round(bs),total_qty:Math.round(bq),by_shop:bbs},shops,staff,ratings};
 }
 
