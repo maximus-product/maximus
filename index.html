@@ -2623,7 +2623,7 @@ function genPersonSection_full(curatorName, myShops){
         {key:'credit',   label:'Кред'},
         {key:'services', label:'Усл'},
     ];
-    const W=1400, ROW_H=68;
+    const W=1600, ROW_H=68;
     const H=120+40+ROW_H*(myShops.length+1)+50;
     const canvas=document.createElement('canvas');
     canvas.width=W; canvas.height=H;
@@ -2715,7 +2715,7 @@ function genPersonSection_full(curatorName, myShops){
 
 function genPersonSection_vmp(curatorName, myShops){
   const sorted=[...myShops].sort((a,b)=>b.vmp-a.vmp);
-  const W=880, ROW_H=44;
+  const W=1100, ROW_H=44;
   const H=96+40+ROW_H*(sorted.length+1)+50;
   const canvas=document.createElement('canvas');
   canvas.width=W; canvas.height=H;
@@ -2771,7 +2771,7 @@ function genPersonSection_vmp(curatorName, myShops){
 // Секция 3: Рейтинг магазинов
 function genPersonSection_shops(curatorName, myShops){
   const sorted=[...myShops].map(s=>({...s,rPct:shopRatingPct(s)})).sort((a,b)=>b.rPct-a.rPct);
-  const W=920, ROW_H=44;
+  const W=1200, ROW_H=44;
   const H=96+40+ROW_H*(sorted.length+1)+50;
   const canvas=document.createElement('canvas');
   canvas.width=W; canvas.height=H;
