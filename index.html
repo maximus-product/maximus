@@ -675,7 +675,9 @@ _id('page-'+activePage).innerHTML=content;
 
 // ИСПРАВЛЕНИЕ 2 и 3: Кнопка назад в профиль + Хатипов
 function openPersonDetail(pageId,name){
-APP.previousPage=pageId;
+// Сохраняем предыдущую страницу перед переходом
+const previousPage = document.querySelector('.nav-tab.active')?.dataset?.page || 'profiles';
+APP.previousPage = previousPage;
 const D=APP.data;const ratingMap={curators:'curators',topk:'topk',zam:'zam'};
 const ratKey=ratingMap[pageId];
 const person=ratKey?D.ratings[ratKey]?.find(p=>p.name===name):null;
@@ -715,7 +717,7 @@ const roleLabels={curators:'Куратор',topk:'Топ Команда',zam:'З
 const roleLabel=roleLabels[pageId]||'Сотрудник';
 const pr=APP.profiles[name]||{};
 const reportBtn=pageId==='curators'?'<div style="position:relative;display:inline-block"><button class="report-btn" onclick="togglePersonMenu(\''+safeName+'\')">📄 Отчёты ▾</button><div id="pmenu_'+safeName+'" style="display:none;position:absolute;top:110%;left:0;z-index:100;background:#0b1428;border:1px solid rgba(100,160,255,0.25);border-radius:12px;padding:8px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:4px 10px 8px;font-weight:700">Выберите отчёт</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'revenue\')">📊 Товарная выручка — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks\')">🛍 Аксессуары — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'services\')">📡 Услуги — магазины</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'full\')">📋 Общее выполнение планов</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'vmp\')">📐 ВМП с разбивкой</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'shops\')">🏪 Рейтинг магазинов</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'all\')" style="color:#00d4ff;border-color:rgba(0,212,255,0.3)">⬇ Все отчёты сразу</div></div></div>':'';
-const content='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap"><div class="detail-back" style="margin-bottom:0" onclick="navTo(\'profiles\')">← Назад к профилям</div>'+reportBtn+'</div><div class="detail-header">'+avatarHtml(name,72)+'<div class="detail-info"><div class="detail-name">'+name+'</div><div class="detail-role">'+roleLabel+(person?' · Рейтинг #'+person.rank:'')+'</div><div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">'+(pr.phone?'<span style="font-size:12px;color:var(--muted)">📞 '+pr.phone+'</span>':'')+(pr.tg?'<span style="font-size:12px;color:var(--muted)">✈ '+pr.tg+'</span>':'')+(pr.birthday?'<span style="font-size:12px;color:var(--gold)">🎂 '+formatBirthday(pr.birthday)+'</span>':'')+'<span style="font-size:12px;color:var(--muted)">'+myShops.length+' магазинов</span></div></div></div><div class="sec-hdr" style="margin-top:0"><div class="sec-title">Сводка по показателям</div><div class="sec-badge">'+myShops.length+' магазинов</div><div class="sec-line"></div></div>'+kpisH+bestShopsH+'<div class="sec-hdr"><div class="sec-title">Магазины</div><div class="sec-badge">'+myShops.length+' точек</div><div class="sec-line"></div></div>'+shopTableHtml(myShops,'kod',1,pageId+'_detail');
+const content='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap"><div class="detail-back" style="margin-bottom:0" onclick="navTo(APP.previousPage || \'profiles\')">← Назад</div>'+reportBtn+'</div><div class="detail-header">'+avatarHtml(name,72)+'<div class="detail-info"><div class="detail-name">'+name+'</div><div class="detail-role">'+roleLabel+(person?' · Рейтинг #'+person.rank:'')+'</div><div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">'+(pr.phone?'<span style="font-size:12px;color:var(--muted)">📞 '+pr.phone+'</span>':'')+(pr.tg?'<span style="font-size:12px;color:var(--muted)">✈ '+pr.tg+'</span>':'')+(pr.birthday?'<span style="font-size:12px;color:var(--gold)">🎂 '+formatBirthday(pr.birthday)+'</span>':'')+'<span style="font-size:12px;color:var(--muted)">'+myShops.length+' магазинов</span></div></div></div><div class="sec-hdr" style="margin-top:0"><div class="sec-title">Сводка по показателям</div><div class="sec-badge">'+myShops.length+' магазинов</div><div class="sec-line"></div></div>'+kpisH+bestShopsH+'<div class="sec-hdr"><div class="sec-title">Магазины</div><div class="sec-badge">'+myShops.length+' точек</div><div class="sec-line"></div></div>'+shopTableHtml(myShops,'kod',1,pageId+'_detail');
 let _detailSortKey='kod',_detailSortDir=1;
 window['__shopColSort_'+pageId+'_detail']=function(key){
 if(_detailSortKey===key)_detailSortDir*=-1;
@@ -1063,7 +1065,6 @@ RPT.download(canvas,info.label.replace(/ /g,'_')+'_кураторы_'+new Date()
 function genCuratorMetricReport2(curatorName,metricKey){
 const METRIC_INFO={revenue:{label:'Товарная выручка',shopKey:'revenue'},aks:{label:'Аксессуары',shopKey:'aks'},services:{label:'Услуги',shopKey:'services'}};
 const info=METRIC_INFO[metricKey];if(!info)return;
-// Хатипов всегда как куратор (уже корректно - s.curator===curatorName)
 const myShops=APP.data.shops.filter(s=>s.curator===curatorName);
 if(!myShops.length){alert('Нет магазинов');return;}
 const rows=[...myShops].map(s=>{const m=s[info.shopKey];const pct=m.plan>0?Math.round(m.forecast/m.plan*100):0;const fPct=m.plan>0?Math.round(m.fact/m.plan*100):0;return{...s,pct,fPct,m};}).sort((a,b)=>b.pct-a.pct);
@@ -1080,10 +1081,10 @@ RPT.download(canvas,info.label+'_'+curatorName.split(' ')[0]+'_'+new Date().toLo
 }
 
 function genPersonReport(curatorName,section){
-// Для Хатипова всегда используем только кураторские магазины (9 штук), а не все 149
+// Хатипов - только как куратор (9 магазинов), не как зам РОП (149 магазинов)
 const isKhatipov = curatorName.includes('Хатипов');
 const myShops = isKhatipov 
-    ? APP.data.shops.filter(s=>s.curator===curatorName)  // Хатипов только как куратор
+    ? APP.data.shops.filter(s=>s.curator===curatorName)  // только как куратор
     : APP.data.shops.filter(s=>s.curator===curatorName||s.topk===curatorName||s.zam===curatorName);
 if(!myShops.length){alert('Нет магазинов');return;}
 if(section==='all'){genPersonSection_full(curatorName,myShops);setTimeout(()=>genPersonSection_vmp(curatorName,myShops),300);setTimeout(()=>genPersonSection_shops(curatorName,myShops),600);return;}
