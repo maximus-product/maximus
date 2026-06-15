@@ -574,7 +574,7 @@ const KPI_ALL=[
 {netKey:'credit',shopKey:'credit',label:'Кредит',c:'c-teal'},
 {netKey:'services',shopKey:'services',label:'Услуги',c:'c-lime'},
 ];
-let kpis='<div class="sec-hdr" style="margin-top:0"><div class="sec-title">Планы сети</div><div class="net-filter"><button class="net-btn'+(homeNetFilter==='all'?' active':'')+'" onclick="setHomeFilter(\'all\')">ММБ + Т2</button><button class="net-btn'+(homeNetFilter==='t2'?' active':'')+'" onclick="setHomeFilter(\'t2\')">Т2</button><button class="net-btn'+(homeNetFilter==='mmb'?' active':'')+'" onclick="setHomeFilter(\'mmb\')">ММБ</button></div><div class="sec-line"></div></div><div class="kpi-grid">';
+let kpis='<div class="sec-hdr" style="margin-top:0"><div class="sec-title">Планы сети</div><div class="net-filter"><button class="net-btn'+(homeNetFilter==='all'?' active':'')+'" onclick="setHomeFilter(\'all\')">ММБ + Т2</button><button class="net-btn'+(homeNetFilter==='t2'?' active':'')+'" onclick="setHomeFilter(\'t2\')">Т2</button><button class="net-btn'+(homeNetFilter==='mmb'?' active':'')+'" onclick="setHomeFilter(\'mmb\')">ММБ</button><button class="report-btn" style="margin-left:auto" onclick="showReportMenu(\'home\')">📄 Отчёты ▾</button></div><div id="report-menu-home" class="report-menu" style="display:none"><div class="report-menu-item" onclick="genNetworkReport()">📊 Выполнение сети</div><div class="report-menu-item" onclick="genSharesReport()">📊 Доли</div></div><div class="sec-line"></div></div><div class="kpi-grid">';
 KPI_ALL.forEach(k=>{
 if(homeNetFilter==='t2'&&k.brandFilter==='ММБ')return;
 if(homeNetFilter==='mmb'&&k.brandFilter==='Т2')return;
@@ -612,6 +612,162 @@ top3ShopsHtml+='</div>';
 _id('page-home').innerHTML=kpis+top3Sec+top3ShopsHtml+'<div class="sec-hdr"><div class="sec-title">Прогноз продаж</div><div class="sec-badge">Т2 vs ММБ</div><div class="sec-line"></div></div><div class="chart-card">'+chartLegend+'<div style="display:flex;gap:8px;padding:0 8px">'+candleGroupsHtml+'</div></div>';
 }
 window.setHomeFilter=function(f){homeNetFilter=f;renderHome();};
+// ОТЧЕТ "Выполнение сети"
+function genNetworkReport(){
+const shops=APP.data.shops;
+const t2=shops.filter(s=>s.brand==='Т2');
+const mmb=shops.filter(s=>s.brand==='ММБ');
+const METRICS=[
+{key:'revenue',label:'Выручка'},
+{key:'sto',label:'СТО'},
+{key:'aks',label:'Аксессуары'},
+{key:'insurance',label:'Страховки'},
+{key:'settings',label:'Настройки'},
+{key:'credit',label:'Кредит'},
+{key:'services',label:'Услуги'}
+];
+const data=METRICS.map(m=>{
+const t2Plan=t2.reduce((s,sh)=>s+(sh[m.key]?.plan||0),0)*0.95;
+const mmbPlan=mmb.reduce((s,sh)=>s+(sh[m.key]?.plan||0),0)*0.95;
+const t2Fact=t2.reduce((s,sh)=>s+(sh[m.key]?.fact||0),0);
+const mmbFact=mmb.reduce((s,sh)=>s+(sh[m.key]?.fact||0),0);
+const t2Fc=t2.reduce((s,sh)=>s+(sh[m.key]?.forecast||0),0);
+const mmbFc=mmb.reduce((s,sh)=>s+(sh[m.key]?.forecast||0),0);
+const totalPlan=t2Plan+mmbPlan;
+const totalFc=t2Fc+mmbFc;
+const pct=totalPlan>0?Math.round(totalFc/totalPlan*100):0;
+const t2Pct=t2Plan>0?Math.round(t2Fc/t2Plan*100):0;
+const mmbPct=mmbPlan>0?Math.round(mmbFc/mmbPlan*100):0;
+return{label:m.label,t2Plan,mmbPlan,t2Fact,mmbFact,t2Fc,mmbFc,totalPlan,totalFc,pct,t2Pct,mmbPct};
+});
+const W=1400,ROW_H=48;
+const H=120+40+ROW_H*(data.length+1)+60;
+const canvas=document.createElement('canvas');
+canvas.width=W;canvas.height=H;
+const ctx=canvas.getContext('2d');
+ctx.fillStyle='#060c1a';ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,'Выполнение сети · Т2 vs ММБ','план × 0.95');
+ctx.font='12px Arial';ctx.fillStyle='#5a7399';
+ctx.fillText('План сети = сумма планов магазинов × 0.95',24,y+20);y+=36;
+const COLS=[
+{label:'Показатель',w:180},
+{label:'План итого',w:140},
+{label:'Факт итого',w:140},
+{label:'Прогноз итого',w:140},
+{label:'% прогноза',w:120},
+{label:'План Т2',w:130},
+{label:'Факт Т2',w:130},
+{label:'Прогноз Т2',w:130},
+{label:'% Т2',w:100},
+{label:'План ММБ',w:130},
+{label:'Факт ММБ',w:130},
+{label:'Прогноз ММБ',w:130},
+{label:'% ММБ',w:100}
+];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+data.forEach((r,i)=>{
+const rankColors=['#ffc847','#c0c0c0','#cd7f32'];
+const rColor=i<3?rankColors[i]:'#c8ddf5';
+const pctColor=r.pct>=100?'#38ffb0':r.pct>=80?'#ffc847':'#ff4d6d';
+const t2Color=r.t2Pct>=100?'#38ffb0':r.t2Pct>=80?'#ffc847':'#ff4d6d';
+const mmbColor=r.mmbPct>=100?'#38ffb0':r.mmbPct>=80?'#ffc847':'#ff4d6d';
+const cols=[
+{value:r.label,align:'left',bold:true,color:'#eaf2ff'},
+{value:RPT.fmt(r.totalPlan),bold:true,color:'#eaf2ff'},
+{value:RPT.fmt(r.t2Fact+r.mmbFact),bold:true,color:pctColor},
+{value:RPT.fmt(r.totalFc),bold:true,color:'#eaf2ff'},
+{value:r.pct+'%',bold:true,color:pctColor},
+{value:RPT.fmt(r.t2Plan),color:'#2d8cff'},
+{value:RPT.fmt(r.t2Fact),color:'#2d8cff'},
+{value:RPT.fmt(r.t2Fc),color:'#2d8cff'},
+{value:r.t2Pct+'%',color:t2Color},
+{value:RPT.fmt(r.mmbPlan),color:'#a78bfa'},
+{value:RPT.fmt(r.mmbFact),color:'#a78bfa'},
+{value:RPT.fmt(r.mmbFc),color:'#a78bfa'},
+{value:r.mmbPct+'%',color:mmbColor}
+].map((col,ci)=>({...col,w:COLS[ci].w}));
+y=RPT.drawTableRow(ctx,W,y,cols,false,r.pct);
+});
+y+=14;ctx.font='11px Arial';ctx.fillStyle='#5a7399';
+ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,'выполнение_сети_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+// ОТЧЕТ "Доли"
+function genSharesReport(){
+const shops=APP.data.shops;
+const totalRev=shops.reduce((s,sh)=>s+(sh.revenue?.forecast||0),0);
+const totalSto=shops.reduce((s,sh)=>s+(sh.sto?.forecast||0),0);
+const totalAks=shops.reduce((s,sh)=>s+(sh.aks?.forecast||0),0);
+const totalIns=shops.reduce((s,sh)=>s+(sh.insurance?.forecast||0),0);
+const totalSet=shops.reduce((s,sh)=>s+(sh.settings?.forecast||0),0);
+const totalCred=shops.reduce((s,sh)=>s+(sh.credit?.forecast||0),0);
+const t2=shops.filter(s=>s.brand==='Т2');
+const mmb=shops.filter(s=>s.brand==='ММБ');
+const t2Rev=t2.reduce((s,sh)=>s+(sh.revenue?.forecast||0),0);
+const mmbRev=mmb.reduce((s,sh)=>s+(sh.revenue?.forecast||0),0);
+const t2Sto=t2.reduce((s,sh)=>s+(sh.sto?.forecast||0),0);
+const mmbSto=mmb.reduce((s,sh)=>s+(sh.sto?.forecast||0),0);
+const t2Aks=t2.reduce((s,sh)=>s+(sh.aks?.forecast||0),0);
+const mmbAks=mmb.reduce((s,sh)=>s+(sh.aks?.forecast||0),0);
+const t2Ins=t2.reduce((s,sh)=>s+(sh.insurance?.forecast||0),0);
+const mmbIns=mmb.reduce((s,sh)=>s+(sh.insurance?.forecast||0),0);
+const t2Set=t2.reduce((s,sh)=>s+(sh.settings?.forecast||0),0);
+const mmbSet=mmb.reduce((s,sh)=>s+(sh.settings?.forecast||0),0);
+const t2Cred=t2.reduce((s,sh)=>s+(sh.credit?.forecast||0),0);
+const mmbCred=mmb.reduce((s,sh)=>s+(sh.credit?.forecast||0),0);
+const rows=[
+{label:'Аксессуары (от Выручки)',plan:28,t2:t2Rev>0?(t2Aks/t2Rev*100):0,mmb:mmbRev>0?(mmbAks/mmbRev*100):0,total:totalRev>0?(totalAks/totalRev*100):0},
+{label:'Страховки (от СТО)',plan:4,t2:t2Sto>0?(t2Ins/t2Sto*100):0,mmb:mmbSto>0?(mmbIns/mmbSto*100):0,total:totalSto>0?(totalIns/totalSto*100):0},
+{label:'Настройки (от СТО)',plan:4,t2:t2Sto>0?(t2Set/t2Sto*100):0,mmb:mmbSto>0?(mmbSet/mmbSto*100):0,total:totalSto>0?(totalSet/totalSto*100):0},
+{label:'Кредит (от Выручки)',plan:25,t2:t2Rev>0?(t2Cred/t2Rev*100):0,mmb:mmbRev>0?(mmbCred/mmbRev*100):0,total:totalRev>0?(totalCred/totalRev*100):0}
+];
+const W=1200,ROW_H=48;
+const H=120+40+ROW_H*(rows.length+1)+60;
+const canvas=document.createElement('canvas');
+canvas.width=W;canvas.height=H;
+const ctx=canvas.getContext('2d');
+ctx.fillStyle='#060c1a';ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,'Доли показателей','план vs факт · Т2 vs ММБ');
+ctx.font='12px Arial';ctx.fillStyle='#5a7399';
+ctx.fillText('Плановые доли: Аксы 28% · Страховки 4% · Настройки 4% · Кредит 25%',24,y+20);y+=36;
+const COLS=[
+{label:'Показатель',w:220},
+{label:'План %',w:100},
+{label:'Факт Т2 %',w:120},
+{label:'Отклонение Т2 %',w:140},
+{label:'Факт ММБ %',w:120},
+{label:'Отклонение ММБ %',w:140},
+{label:'Т2+ММБ %',w:120},
+{label:'Т2+ММБ отклонение %',w:160}
+];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+rows.forEach((r,i)=>{
+const t2Dev=r.t2-r.plan;
+const mmbDev=r.mmb-r.plan;
+const totalDev=r.total-r.plan;
+const t2Color=r.t2>=r.plan?'#38ffb0':'#ff4d6d';
+const mmbColor=r.mmb>=r.plan?'#38ffb0':'#ff4d6d';
+const totalColor=r.total>=r.plan?'#38ffb0':'#ff4d6d';
+const cols=[
+{value:r.label,align:'left',bold:true,color:'#eaf2ff'},
+{value:r.plan+'%',color:'#5a7399'},
+{value:r.t2.toFixed(1)+'%',color:t2Color},
+{value:(t2Dev>=0?'+':'')+t2Dev.toFixed(1)+'%',color:t2Color},
+{value:r.mmb.toFixed(1)+'%',color:mmbColor},
+{value:(mmbDev>=0?'+':'')+mmbDev.toFixed(1)+'%',color:mmbColor},
+{value:r.total.toFixed(1)+'%',bold:true,color:totalColor},
+{value:(totalDev>=0?'+':'')+totalDev.toFixed(1)+'%',bold:true,color:totalColor}
+].map((col,ci)=>({...col,w:COLS[ci].w}));
+y=RPT.drawTableRow(ctx,W,y,cols,false);
+});
+y+=14;ctx.font='11px Arial';ctx.fillStyle='#5a7399';
+ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,'доли_показателей_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+
+
 
 const METRIC_DEFS=[
 {key:'revenue',label:'Выручка'},
@@ -1065,27 +1221,7 @@ const METRIC_INFO={revenue:{label:'Товарная выручка',shopKey:'rev
 const info=METRIC_INFO[metricKey];if(!info)return;
 const myShops=APP.data.shops.filter(s=>s.curator===curatorName);
 if(!myShops.length){alert('Нет магазинов');return;}
-const t2=APP.data.shops.filter(s=>s.brand==='Т2');
-const mmb=APP.data.shops.filter(s=>s.brand==='ММБ');
-const t2Rev=t2.reduce((s,sh)=>s+(sh.revenue?.forecast||0),0);
-const mmbRev=mmb.reduce((s,sh)=>s+(sh.revenue?.forecast||0),0);
-const t2Sto=t2.reduce((s,sh)=>s+(sh.sto?.forecast||0),0);
-const mmbSto=mmb.reduce((s,sh)=>s+(sh.sto?.forecast||0),0);
-const t2Aks=t2.reduce((s,sh)=>s+(sh.aks?.forecast||0),0);
-const mmbAks=mmb.reduce((s,sh)=>s+(sh.aks?.forecast||0),0);
-const t2Ins=t2.reduce((s,sh)=>s+(sh.insurance?.forecast||0),0);
-const mmbIns=mmb.reduce((s,sh)=>s+(sh.insurance?.forecast||0),0);
-const t2Set=t2.reduce((s,sh)=>s+(sh.settings?.forecast||0),0);
-const mmbSet=mmb.reduce((s,sh)=>s+(sh.settings?.forecast||0),0);
-const t2Cred=t2.reduce((s,sh)=>s+(sh.credit?.forecast||0),0);
-const mmbCred=mmb.reduce((s,sh)=>s+(sh.credit?.forecast||0),0);
-const rows=[
-{label:'Аксессуары (от Выручки)',plan:28,t2:t2Rev>0?(t2Aks/t2Rev*100):0,mmb:mmbRev>0?(mmbAks/mmbRev*100):0,total:0},
-{label:'Страховки (от СТО)',plan:4,t2:t2Sto>0?(t2Ins/t2Sto*100):0,mmb:mmbSto>0?(mmbIns/mmbSto*100):0,total:0},
-{label:'Настройки (от СТО)',plan:4,t2:t2Sto>0?(t2Set/t2Sto*100):0,mmb:mmbSto>0?(mmbSet/mmbSto*100):0,total:0},
-{label:'Кредит (от Выручки)',plan:25,t2:t2Rev>0?(t2Cred/t2Rev*100):0,mmb:mmbRev>0?(mmbCred/mmbRev*100):0,total:0}
-];
-rows.forEach(r=>{r.total=(r.t2+r.mmb)/2;});const pct=m.plan>0?Math.round(m.forecast/m.plan*100):0;const fPct=m.plan>0?Math.round(m.fact/m.plan*100):0;return{...s,pct,fPct,m};}).sort((a,b)=>b.pct-a.pct);
+const rows=[...myShops].map(s=>{const m=s[info.shopKey];const pct=m.plan>0?Math.round(m.forecast/m.plan*100):0;const fPct=m.plan>0?Math.round(m.fact/m.plan*100):0;return{...s,pct,fPct,m};}).sort((a,b)=>b.pct-a.pct);
 const W=860,ROW_H=44;const H=96+40+ROW_H*(rows.length+1)+50;
 const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
 ctx.fillStyle=RPT.BG;ctx.fillRect(0,0,W,H);
