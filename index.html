@@ -290,6 +290,19 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
 .bday-days.today{color:var(--gold)}
 .bday-days.soon{color:var(--gold)}
 .bday-days.far{color:var(--muted)}
+@media(max-width:900px){.grid2,.grid3,.top3-groups{grid-template-columns:1fr}}
+@media(max-width:768px){
+nav{display:none!important}.mob-menu-btn{display:block}
+#last-upload-info{display:none}.upload-btn{display:none}
+header{padding:0 16px;height:52px}
+main{padding:16px 12px 80px!important}
+.kpi-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px}
+.top3-groups{grid-template-columns:1fr!important}
+.profiles-grid{grid-template-columns:repeat(2,1fr)}
+.filter-row{gap:6px}.search-input{width:100%!important}
+.modal{padding:22px 16px}
+}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr!important}.profiles-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -390,7 +403,6 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
 <div id="page-settings" class="page"></div>
 </main>
 </div>
-
 <div class="modal-overlay" id="upload-modal">
 <div class="modal">
 <div class="modal-close" onclick="closeUpload()">✕</div>
@@ -399,7 +411,11 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
 <div class="utype-btn active" id="utype-daily" onclick="setUType('daily')">📅 Ежедневный</div>
 <div class="utype-btn" id="utype-final" onclick="setUType('final')">📦 Итоговый (архив)</div>
 </div>
-<div class="upload-area" id="drop-zone" onclick="document.getElementById('file-inp').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+<div class="upload-area" id="drop-zone"
+onclick="document.getElementById('file-inp').click()"
+ondragover="event.preventDefault();this.classList.add('drag')"
+ondragleave="this.classList.remove('drag')"
+ondrop="handleDrop(event)">
 <div style="font-size:36px;margin-bottom:10px">📊</div>
 <div style="font-size:13px;color:var(--text);margin-bottom:5px">Перетащите .xlsx или нажмите для выбора</div>
 <div style="font-size:11px;color:var(--muted)">Листы: Прогноз продаж · Планы сети · Бештау</div>
@@ -412,7 +428,6 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
 <div class="upload-err" id="upload-err"></div>
 </div>
 </div>
-
 <div class="modal-overlay" id="profile-modal">
 <div class="modal">
 <div class="modal-close" onclick="closePM()">✕</div>
@@ -428,7 +443,6 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
 <button class="form-save" onclick="saveProfile()">Сохранить</button>
 </div>
 </div>
-
 <div class="modal-overlay" id="settings-modal">
 <div class="modal">
 <div class="modal-close" onclick="closeSettingsModal()">✕</div>
@@ -467,15 +481,12 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
 <button class="form-save" onclick="saveReportConfig()">Сохранить</button>
 </div>
 </div>
-
 <script>
 const SUPABASE_URL='https://cwsyikrqgsppwlskjsqz.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3c3lpa3JxZ3NwcHdsc2tqc3F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NDIyNDIsImV4cCI6MjA5NjUxODI0Mn0.UH6tPMjCKomwzDwVKd2o_RTHVAXoNmD6PEhk8Ufq_0I';
 const SB_HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'};
 const EMPTY_DATA={network:{},bештау:{total_sum:0,total_qty:0,by_shop:{}},shops:[],staff:{curators:[],topk:[],zam:[]},ratings:{topk:[],curators:[],zam:[]}};
 const SEVEN_DAYS=7*24*60*60*1000;
-const SPECIAL_CURATOR = "Хатипов Кемал Ибраимович";
-
 const DB={
 async loadData(){
 try{const r=await fetch(SUPABASE_URL+'/rest/v1/dashboard_data?id=eq.current&select=data,uploaded_at',{method:'GET',headers:{...SB_HEADERS,'Cache-Control':'no-cache'}});
@@ -496,13 +507,11 @@ async loadProfiles(){
 try{const r=await fetch(SUPABASE_URL+'/rest/v1/staff_profiles?select=name,phone,telegram,photo_url,birthday',{headers:SB_HEADERS});if(!r.ok)return{};const rows=await r.json();const result={};rows.forEach(p=>{result[p.name]={phone:p.phone||'',tg:p.telegram||'',photo:p.photo_url||'',birthday:p.birthday||''};});return result;}catch(e){return{};}
 }
 };
-
 const APP={data:EMPTY_DATA,profiles:{},history:[],uploadType:'daily',editingProfile:null,cloudLoaded:false,reportConfigs:[],previousPage:'home'};
-
 function openSidebar(){_id('sidebar').classList.add('open');_id('mob-overlay').classList.add('show');document.body.style.overflow='hidden';}
 function closeSidebar(){_id('sidebar').classList.remove('open');_id('mob-overlay').classList.remove('show');document.body.style.overflow='';}
 function navTo(pageId){
-APP.previousPage=pageId;
+APP.previousPage=(APP.currentPage==='profiles'?'profiles':pageId);
 document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
 const dt=document.querySelector('.nav-tab[data-page="'+pageId+'"]');if(dt)dt.classList.add('active');
 document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active'));
@@ -543,6 +552,7 @@ return'<div style="'+style+'">'+initials(name)+'</div>';
 }
 function getContact(n){const p=APP.profiles[n];return[p?.phone,p?.tg].filter(Boolean).join(' · ')||'';}
 
+// ИСПРАВЛЕНИЕ 1: Убран дубль прогноза в KPI карточках
 function kpiCardHtml(label,fact,plan,forecast,color){
 const fcPct=plan>0?Math.round(forecast/plan*100):0;
 const factPct=plan>0?Math.round(fact/plan*100):0;
@@ -579,7 +589,6 @@ const beshFact=homeNetFilter==='all'?B.total_sum:Object.entries(B.by_shop).reduc
 const beshQty=homeNetFilter==='all'?B.total_qty:Object.entries(B.by_shop).reduce((s,[kod,v])=>{const sh=filteredShops.find(x=>x.kod===kod);return s+(sh?v.qty:0);},0);
 kpis+='<div class="kpi-card c-red"><div class="kpi-label">Бештау · нал СТО</div><div class="kpi-pct-row"><div class="kpi-pct-big pct-ok">'+fmt(beshFact)+'</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><span style="font-size:10px;font-weight:700;color:var(--text);opacity:.5;text-transform:uppercase;letter-spacing:.5px">факт</span><span style="font-size:13px;font-weight:800;color:var(--white)">'+beshQty+' шт</span></div></div></div>';
 kpis+='</div>';
-
 function top3Group(title,arr,pageId){
 if(!arr?.length)return'<div class="top3-group"><div class="top3-group-title">'+title+'</div><div style="color:var(--muted);font-size:12px;padding:10px 0">Нет данных</div></div>';
 const top=arr.slice(0,3);let cards='';
@@ -600,61 +609,9 @@ const topShops=[...APP.data.shops].map(s=>({...s,rPct:shopRatingPct(s)})).sort((
 let top3ShopsHtml='<div class="sec-hdr"><div class="sec-title">Топ магазины</div><div class="sec-badge">по рейтингу</div><div class="sec-line"></div></div><div class="top3-groups" style="grid-template-columns:repeat(3,1fr)">';
 topShops.forEach((s,i)=>{const rc=['r1','r2','r3'][i];top3ShopsHtml+='<div class="top3-card" onclick="openShopDetail(\''+s.kod.replace(/'/g,"\\'")+'\');goPage(\'allshops\')"><div class="top3-rank '+rc+'">'+(i+1)+'</div><div style="font-size:28px">🏪</div><div class="top3-info"><div class="top3-name">'+s.kod+'</div><div class="top3-sub">'+s.name.slice(0,35)+'</div><div class="top3-sub" style="margin-top:2px"><span class="'+(s.brand==='Т2'?'tag-t2':'tag-mmb')+'">'+s.brand+'</span></div></div><div class="top3-score" style="color:'+pctColor(s.rPct)+'">'+s.rPct+'%</div></div>';});
 top3ShopsHtml+='</div>';
-
-// Главная + новые отчёты
-const reportsSection = `
-<div class="sec-hdr" style="margin-top:32px">
-    <div class="sec-title">Отчёты сети</div>
-    <div class="sec-line"></div>
-    <button class="report-btn" onclick="showHomeReportMenu()">📄 Отчёты ▾</button>
-</div>`;
-
-_id('page-home').innerHTML = kpis + top3Sec + top3ShopsHtml + 
-    `<div class="sec-hdr"><div class="sec-title">Прогноз продаж</div><div class="sec-badge">Т2 vs ММБ</div><div class="sec-line"></div></div><div class="chart-card">${chartLegend}<div style="display:flex;gap:8px;padding:0 8px">${candleGroupsHtml}</div></div>` +
-    `<div class="sec-hdr"><div class="sec-title">Доли показателей</div><div class="sec-badge">План vs Прогноз</div><div class="sec-line"></div></div><div class="chart-card" id="share-chart"></div>` +
-    reportsSection;
-
-renderShareChart();
+_id('page-home').innerHTML=kpis+top3Sec+top3ShopsHtml+'<div class="sec-hdr"><div class="sec-title">Прогноз продаж</div><div class="sec-badge">Т2 vs ММБ</div><div class="sec-line"></div></div><div class="chart-card">'+chartLegend+'<div style="display:flex;gap:8px;padding:0 8px">'+candleGroupsHtml+'</div></div>';
 }
-
 window.setHomeFilter=function(f){homeNetFilter=f;renderHome();};
-
-function renderShareChart() {
-    const container = _id('share-chart');
-    if (!container) return;
-    const t2Shops = APP.data.shops.filter(s => s.brand === 'Т2');
-    const mmbShops = APP.data.shops.filter(s => s.brand === 'ММБ');
-    const metrics = [
-        {key:'aks', label:'Аксессуары', plan:28},
-        {key:'insurance', label:'Страховки', plan:4},
-        {key:'settings', label:'Настройки', plan:4},
-        {key:'credit', label:'Кредит', plan:25}
-    ];
-    let html = '<div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap">';
-    metrics.forEach(m => {
-        const t2 = sumMetric(t2Shops, m.key);
-        const mmb = sumMetric(mmbShops, m.key);
-        const totalPlan = t2.plan + mmb.plan;
-        const totalFc = t2.forecast + mmb.forecast;
-        const t2Pct = totalPlan ? Math.round(t2.forecast / totalPlan * 100) : 0;
-        const mmbPct = totalPlan ? Math.round(mmb.forecast / totalPlan * 100) : 0;
-        const actual = totalPlan ? Math.round(totalFc / totalPlan * 100) : 0;
-        html += `
-            <div style="text-align:center;min-width:190px">
-                <div style="font-weight:700;margin-bottom:8px">${m.label}</div>
-                <div style="height:32px;background:#16223f;border-radius:8px;overflow:hidden;position:relative">
-                    <div style="height:100%;width:${t2Pct}%;background:#2d8cff;float:left"></div>
-                    <div style="height:100%;width:${mmbPct}%;background:#a78bfa;float:left"></div>
-                </div>
-                <div style="font-size:11px;margin-top:6px;color:var(--muted)">
-                    Т2 <span style="color:#2d8cff">${t2Pct}%</span> • ММБ <span style="color:#a78bfa">${mmbPct}%</span><br>
-                    <strong style="color:var(--accent2)">${actual}%</strong> (план ${m.plan}%)
-                </div>
-            </div>`;
-    });
-    html += '</div>';
-    container.innerHTML = html;
-}
 
 const METRIC_DEFS=[
 {key:'revenue',label:'Выручка'},
@@ -705,54 +662,69 @@ METRIC_DEFS.forEach((d,i)=>{const m=s[d.key];metricsHtml+=kpiCardHtml(d.label,m?
 metricsHtml+='<div class="kpi-card c-lime"><div class="kpi-label">ВМП Коэффициент</div><div class="kpi-pct-row"><div class="kpi-pct-big '+chipCls(vmpP)+'" style="font-size:24px">'+vmpP+'%</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><span style="font-size:10px;font-weight:700;color:var(--text);opacity:.5;text-transform:uppercase">коэф</span><span style="font-size:13px;font-weight:800;color:var(--white)">'+s.vmp.toFixed(4)+'</span></div></div><div class="kpi-prog-track"><div class="kpi-prog-fill" style="width:'+Math.min(vmpP,100)+'%;background:'+pctColor(vmpP)+'"></div></div></div>';
 metricsHtml+='</div>';
 const activePage=document.querySelector('.nav-tab.active')?.dataset?.page||'t2';
-let backFn = 'renderShopsPage(\'t2\')';
+let backFn;
+if(activePage==='t2'||activePage==='mmb')backFn='renderShopsPage(\''+activePage+'\')';
+else if(activePage==='allshops')backFn='renderAllShopsPage()';
+else if(activePage==='curators')backFn='renderRatingPage(\'page-curators\',APP.data.ratings.curators,\'Рейтинг кураторов\')';
+else if(activePage==='topk')backFn='renderRatingPage(\'page-topk\',APP.data.ratings.topk,\'Рейтинг · Топ Команда\')';
+else if(activePage==='zam')backFn='renderRatingPage(\'page-zam\',APP.data.ratings.zam,\'Рейтинг замов РОП\')';
+else backFn='renderShopsPage(\'t2\')';
 const content='<div class="detail-back" onclick="'+backFn+'">← Назад</div><div class="detail-header"><div style="font-size:40px">🏪</div><div class="detail-info"><div class="detail-name">'+s.kod+'</div><div class="detail-role" style="margin-top:4px;color:var(--text);font-size:13px">'+s.name+'</div><div class="detail-kpis" style="margin-top:10px"><div><span class="'+(s.brand==='Т2'?'tag-t2':'tag-mmb')+'">'+s.brand+'</span></div><div style="font-size:12px;color:var(--muted)">Куратор: <span style="color:var(--text)">'+s.curator+'</span></div><div style="font-size:12px;color:var(--muted)">Топ-К: <span style="color:var(--text)">'+s.topk+'</span></div><div style="font-size:12px;color:var(--muted)">Зам: <span style="color:var(--text)">'+s.zam+'</span></div></div></div></div><div class="sec-hdr" style="margin-top:0"><div class="sec-title">Показатели магазина</div><div class="sec-badge">% прогноза · план · факт</div><div class="sec-line"></div></div>'+metricsHtml;
 _id('page-'+activePage).innerHTML=content;
 }
 
-function openPersonDetail(pageId, name){
-    APP.previousPage = 'profiles';
-    const D=APP.data;
-    const ratingMap={curators:'curators',topk:'topk',zam:'zam'};
-    const ratKey=ratingMap[pageId];
-    const person=ratKey?D.ratings[ratKey]?.find(p=>p.name===name):null;
-    const myShops = getPersonShops(name, pageId);
-    const agg={};
-    METRIC_DEFS.forEach(d=>{
-        const planSum=myShops.reduce((s,sh)=>s+(sh[d.key]?.plan||0),0);
-        const factSum=myShops.reduce((s,sh)=>s+(sh[d.key]?.fact||0),0);
-        const fcSum=myShops.reduce((s,sh)=>s+(sh[d.key]?.forecast||0),0);
-        agg[d.key]={plan:planSum,fact:factSum,forecast:fcSum,pct:planSum>0?factSum/planSum:0};
-    });
-    const COLORS=['c-blue','c-cyan','c-green','c-gold','c-orange','c-teal','c-purple','c-pink'];
-    let kpisH='<div class="kpi-grid">';
-    METRIC_DEFS.forEach((d,i)=>{kpisH+=kpiCardHtml(d.label,agg[d.key].fact,agg[d.key].plan,agg[d.key].forecast,COLORS[i%COLORS.length]);});
-    kpisH+='</div>';
+// ИСПРАВЛЕНИЕ 2 и 3: Кнопка назад в профиль + Хатипов
+function openPersonDetail(pageId,name){
+APP.previousPage=(APP.currentPage==='profiles'?'profiles':pageId);
+const D=APP.data;const ratingMap={curators:'curators',topk:'topk',zam:'zam'};
+const ratKey=ratingMap[pageId];
+const person=ratKey?D.ratings[ratKey]?.find(p=>p.name===name):null;
+const myShops=D.shops.filter(s=>(pageId==='curators'&&s.curator===name)||(pageId==='topk'&&s.topk===name)||(pageId==='zam'&&s.zam===name));
+const agg={};
+METRIC_DEFS.forEach(d=>{
+const planSum=myShops.reduce((s,sh)=>s+(sh[d.key]?.plan||0),0);
+const factSum=myShops.reduce((s,sh)=>s+(sh[d.key]?.fact||0),0);
+const fcSum=myShops.reduce((s,sh)=>s+(sh[d.key]?.forecast||0),0);
+agg[d.key]={plan:planSum,fact:factSum,forecast:fcSum,pct:planSum>0?factSum/planSum:0};
+});
+const COLORS=['c-blue','c-cyan','c-green','c-gold','c-orange','c-teal','c-purple','c-pink'];
+let kpisH='<div class="kpi-grid">';
+METRIC_DEFS.forEach((d,i)=>{kpisH+=kpiCardHtml(d.label,agg[d.key].fact,agg[d.key].plan,agg[d.key].forecast,COLORS[i%COLORS.length]);});
+kpisH+='</div>';
 
-    let bestShopsH='';
-    if(myShops.length>0){
-        bestShopsH='<div class="sec-hdr"><div class="sec-title">Лучшие магазины по показателям</div><div class="sec-badge">топ по прогнозу</div><div class="sec-line"></div></div><div class="kpi-grid">';
-        METRIC_DEFS.forEach((d,i)=>{
-            const best=myShops.filter(sh=>sh[d.key]?.plan>0).sort((a,b)=>{
-                const ap=a[d.key].forecast/a[d.key].plan;
-                const bp=b[d.key].forecast/b[d.key].plan;
-                return bp-ap;
-            })[0];
-            if(best){
-                const pctVal=best[d.key].forecast/best[d.key].plan*100;
-                bestShopsH+='<div class="kpi-card '+COLORS[i%COLORS.length]+'" style="cursor:pointer" onclick="openShopDetail(\''+best.kod.replace(/'/g,"\\'")+'\')"><div class="kpi-label">'+d.label+' · лучший</div><div class="kpi-pct-row">'+pctBadge(Math.round(pctVal),16)+'<div style="font-size:11px;font-weight:700;color:var(--white);text-align:right;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+best.kod+'</div></div><div class="kpi-prog-track"><div class="kpi-prog-fill" style="width:'+Math.min(pctVal,100)+'%;background:'+pctColor(pctVal)+'"></div></div><div class="kpi-bottom"><div class="kpi-bottom-item"><span class="kpi-bottom-lbl">ПЛАН</span><span class="kpi-bottom-val">'+fmt(best[d.key].plan)+'</span></div><div class="kpi-divider"></div><div class="kpi-bottom-item"><span class="kpi-bottom-lbl">ФАКТ</span><span class="kpi-bottom-val">'+fmt(best[d.key].fact)+'</span></div></div></div>';
-            }
-        });
-        bestShopsH+='</div>';
-    }
+// ИСПРАВЛЕНИЕ 4: Лучшие магазины с план/факт/прогноз
+let bestShopsH='';
+if(myShops.length>0){
+bestShopsH='<div class="sec-hdr"><div class="sec-title">Лучшие магазины по показателям</div><div class="sec-badge">топ по прогнозу</div><div class="sec-line"></div></div><div class="kpi-grid">';
+METRIC_DEFS.forEach((d,i)=>{
+const best=myShops.filter(sh=>sh[d.key]?.plan>0).sort((a,b)=>{
+const ap=a[d.key].forecast/a[d.key].plan;
+const bp=b[d.key].forecast/b[d.key].plan;
+return bp-ap;
+})[0];
+if(best){
+const pctVal=best[d.key].forecast/best[d.key].plan*100;
+bestShopsH+='<div class="kpi-card '+COLORS[i%COLORS.length]+'" style="cursor:pointer" onclick="openShopDetail(\''+best.kod.replace(/'/g,"\\'")+'\')"><div class="kpi-label">'+d.label+' · лучший</div><div class="kpi-pct-row">'+pctBadge(Math.round(pctVal),16)+'<div style="font-size:11px;font-weight:700;color:var(--white);text-align:right;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+best.kod+'</div></div><div class="kpi-prog-track"><div class="kpi-prog-fill" style="width:'+Math.min(pctVal,100)+'%;background:'+pctColor(pctVal)+'"></div></div><div class="kpi-bottom"><div class="kpi-bottom-item"><span class="kpi-bottom-lbl">ПЛАН</span><span class="kpi-bottom-val">'+fmt(best[d.key].plan)+'</span></div><div class="kpi-divider"></div><div class="kpi-bottom-item"><span class="kpi-bottom-lbl">ФАКТ</span><span class="kpi-bottom-val">'+fmt(best[d.key].fact)+'</span></div></div></div>';
+}
+});
+bestShopsH+='</div>';
+}
 
-    const safeName=name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30);
-    const roleLabels={curators:'Куратор',topk:'Топ Команда',zam:'Зам РОП'};
-    const roleLabel=roleLabels[pageId]||'Сотрудник';
-    const pr=APP.profiles[name]||{};
-    const reportBtn=pageId==='curators'?'<div style="position:relative;display:inline-block"><button class="report-btn" onclick="togglePersonMenu(\''+safeName+'\')">📄 Отчёты ▾</button><div id="pmenu_'+safeName+'" style="display:none;position:absolute;top:110%;left:0;z-index:100;background:#0b1428;border:1px solid rgba(100,160,255,0.25);border-radius:12px;padding:8px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:4px 10px 8px;font-weight:700">Выберите отчёт</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'revenue\')">📊 Товарная выручка — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks\')">🛍 Аксессуары — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'services\')">📡 Услуги — магазины</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'full\')">📋 Общее выполнение планов</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'vmp\')">📐 ВМП с разбивкой</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'shops\')">🏪 Рейтинг магазинов</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'all\')" style="color:#00d4ff;border-color:rgba(0,212,255,0.3)">⬇ Все отчёты сразу</div></div></div>':'';
-    const content='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap"><div class="detail-back" style="margin-bottom:0" onclick="navTo(\'profiles\')">← Назад к профилям</div>'+reportBtn+'</div><div class="detail-header">'+avatarHtml(name,72)+'<div class="detail-info"><div class="detail-name">'+name+'</div><div class="detail-role">'+roleLabel+(person?' · Рейтинг #'+person.rank:'')+'</div><div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">'+(pr.phone?'<span style="font-size:12px;color:var(--muted)">📞 '+pr.phone+'</span>':'')+(pr.tg?'<span style="font-size:12px;color:var(--muted)">✈ '+pr.tg+'</span>':'')+(pr.birthday?'<span style="font-size:12px;color:var(--gold)">🎂 '+formatBirthday(pr.birthday)+'</span>':'')+'<span style="font-size:12px;color:var(--muted)">'+myShops.length+' магазинов</span></div></div></div><div class="sec-hdr" style="margin-top:0"><div class="sec-title">Сводка по показателям</div><div class="sec-badge">'+myShops.length+' магазинов</div><div class="sec-line"></div></div>'+kpisH+bestShopsH+'<div class="sec-hdr"><div class="sec-title">Магазины</div><div class="sec-badge">'+myShops.length+' точек</div><div class="sec-line"></div></div>'+shopTableHtml(myShops,'kod',1,pageId+'_detail');
-    _id('page-'+pageId).innerHTML=content;
+const safeName=name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30);
+const roleLabels={curators:'Куратор',topk:'Топ Команда',zam:'Зам РОП'};
+const roleLabel=roleLabels[pageId]||'Сотрудник';
+const pr=APP.profiles[name]||{};
+const reportBtn=pageId==='curators'?'<div style="position:relative;display:inline-block"><button class="report-btn" onclick="togglePersonMenu(\''+safeName+'\')">📄 Отчёты ▾</button><div id="pmenu_'+safeName+'" style="display:none;position:absolute;top:110%;left:0;z-index:100;background:#0b1428;border:1px solid rgba(100,160,255,0.25);border-radius:12px;padding:8px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:4px 10px 8px;font-weight:700">Выберите отчёт</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'revenue\')">📊 Товарная выручка — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks\')">🛍 Аксессуары — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'services\')">📡 Услуги — магазины</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'full\')">📋 Общее выполнение планов</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'vmp\')">📐 ВМП с разбивкой</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'shops\')">🏪 Рейтинг магазинов</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'all\')" style="color:#00d4ff;border-color:rgba(0,212,255,0.3)">⬇ Все отчёты сразу</div></div></div>':'';
+const content='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap"><div class="detail-back" style="margin-bottom:0" onclick="navTo(\'profiles\')">← Назад к профилям</div>'+reportBtn+'</div><div class="detail-header">'+avatarHtml(name,72)+'<div class="detail-info"><div class="detail-name">'+name+'</div><div class="detail-role">'+roleLabel+(person?' · Рейтинг #'+person.rank:'')+'</div><div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">'+(pr.phone?'<span style="font-size:12px;color:var(--muted)">📞 '+pr.phone+'</span>':'')+(pr.tg?'<span style="font-size:12px;color:var(--muted)">✈ '+pr.tg+'</span>':'')+(pr.birthday?'<span style="font-size:12px;color:var(--gold)">🎂 '+formatBirthday(pr.birthday)+'</span>':'')+'<span style="font-size:12px;color:var(--muted)">'+myShops.length+' магазинов</span></div></div></div><div class="sec-hdr" style="margin-top:0"><div class="sec-title">Сводка по показателям</div><div class="sec-badge">'+myShops.length+' магазинов</div><div class="sec-line"></div></div>'+kpisH+bestShopsH+'<div class="sec-hdr"><div class="sec-title">Магазины</div><div class="sec-badge">'+myShops.length+' точек</div><div class="sec-line"></div></div>'+shopTableHtml(myShops,'kod',1,pageId+'_detail');
+let _detailSortKey='kod',_detailSortDir=1;
+window['__shopColSort_'+pageId+'_detail']=function(key){
+if(_detailSortKey===key)_detailSortDir*=-1;
+else{_detailSortKey=key;_detailSortDir=(key==='kod'||key==='name')?1:-1;}
+const tbl=_id('page-'+pageId).querySelector('[id^="shop-tbl"]');
+if(tbl)tbl.innerHTML=shopTableHtml(myShops,_detailSortKey,_detailSortDir,pageId+'_detail');
+else{const container=_id('page-'+pageId);const allTbls=container.querySelectorAll('.rtable-wrap,.empty-state');const last=allTbls[allTbls.length-1];if(last)last.outerHTML=shopTableHtml(myShops,_detailSortKey,_detailSortDir,pageId+'_detail');}
+};
+_id('page-'+pageId).innerHTML=content;
 }
 
 function formatBirthday(bday){
@@ -765,9 +737,49 @@ const CURATOR_BRANDS_MAP={'Килимник Георгий':'ММБ','Абдур
 function getCuratorBrand(name){for(const k of Object.keys(CURATOR_BRANDS_MAP)){if(name.includes(k.split(' ')[0]))return CURATOR_BRANDS_MAP[k];}return'Т2';}
 
 function renderRatingPage(pageElId,arr,title){
-    // ... (оригинальный код renderRatingPage с улучшениями ширины столбца ФИО)
-    const el=_id(pageElId);const pageId=pageElId.replace('page-','');
-    // ... остальной код без изменений, кроме ширины колонок в отчётах
+const el=_id(pageElId);const pageId=pageElId.replace('page-','');
+const keyMap={curators:'curator',topk:'topk',zam:'zam'};
+const k=keyMap[pageId];
+const filteredArr=arr.filter(p=>APP.data.shops.some(s=>s[k]===p.name)).map((p,idx)=>({...p,rank:idx+1}));
+if(!filteredArr?.length){el.innerHTML='<div class="empty-state">Нет данных</div>';return;}
+const METRICS=filteredArr[0]?.metrics||['Товарка','Аксессуары','Кредит','Услуги','ВМП','АКС Приоритет'];
+const isRatingPage=pageId==='curators'||pageId==='topk'||pageId==='zam';
+let sortKey='rank',sortDir=1,filterQ='';
+function sortedFiltered(){
+let list=filterQ?filteredArr.filter(p=>p.name.toLowerCase().includes(filterQ.toLowerCase())):[...filteredArr];
+list.sort((a,b)=>{if(sortKey==='rank')return(a.rank-b.rank)*sortDir;if(sortKey==='name')return a.name.localeCompare(b.name)*sortDir;if(sortKey==='itog')return(a.itog-b.itog)*sortDir;if(sortKey.startsWith('m')){const idx=parseInt(sortKey.slice(1));return((a.coeffs[idx]||0)-(b.coeffs[idx]||0))*sortDir;}return 0;});
+return list;
+}
+function thCls(key){return key===sortKey?(sortDir===1?'asc':'desc'):'';}
+function buildThead(){
+const metricThs=METRICS.map((m,i)=>'<th class="rth-sortable '+thCls('m'+i)+'" onclick="__rSort_'+pageId+'(\'m'+i+'\')">'+m+'</th>').join('');
+const brandCol=pageId==='curators'?'<th>БРЕНД</th>':'';
+const extraCols=isRatingPage?'<th>СТО</th><th>НАСТРОЙКИ</th><th>СТРАХОВКИ</th>':'';
+return'<thead><tr><th class="rth-sortable '+thCls('rank')+'" onclick="__rSort_'+pageId+'(\'rank\')">#</th><th class="rth-sortable '+thCls('name')+'" onclick="__rSort_'+pageId+'(\'name\')">СОТРУДНИК</th>'+brandCol+metricThs+extraCols+'<th class="rth-sortable '+thCls('itog')+'" onclick="__rSort_'+pageId+'(\'itog\')">ИТОГ</th><th></th></tr></thead>';
+}
+function buildRows(list){
+return list.map(p=>{
+const rc=rankCls(p.rank);const contact=getContact(p.name);
+const metricCells=METRICS.map((m,i)=>{const c=p.coeffs[i]||0;const pc2=Math.round(c*100);return'<td><div style="display:flex;flex-direction:column;gap:3px">'+pctBadge(pc2,11)+'<div style="height:8px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;width:75px"><div style="height:100%;width:'+Math.min(pc2,100)+'%;background:'+pctColor(pc2)+';border-radius:4px"></div></div><div style="font-size:9px;color:var(--muted)">место '+(p.places[i]||'—')+'</div></div></td>';}).join('');
+let extraCells='';
+if(isRatingPage){
+const myShops=APP.data.shops.filter(s=>s[k]===p.name);
+const aggPct=(key)=>{const plan=myShops.reduce((s,sh)=>s+(sh[key]?.plan||0),0);const fc=myShops.reduce((s,sh)=>s+(sh[key]?.forecast||0),0);return plan>0?Math.round(fc/plan*100):0;};
+extraCells='<td><div style="display:flex;flex-direction:column;gap:2px;align-items:center">'+pctBadge(aggPct('sto'),11)+'<div style="height:6px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;width:60px"><div style="height:100%;width:'+Math.min(aggPct('sto'),100)+'%;background:'+pctColor(aggPct('sto'))+';border-radius:3px"></div></div></div></td><td><div style="display:flex;flex-direction:column;gap:2px;align-items:center">'+pctBadge(aggPct('settings'),11)+'<div style="height:6px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;width:60px"><div style="height:100%;width:'+Math.min(aggPct('settings'),100)+'%;background:'+pctColor(aggPct('settings'))+';border-radius:3px"></div></div></div></td><td><div style="display:flex;flex-direction:column;gap:2px;align-items:center">'+pctBadge(aggPct('insurance'),11)+'<div style="height:6px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;width:60px"><div style="height:100%;width:'+Math.min(aggPct('insurance'),100)+'%;background:'+pctColor(aggPct('insurance'))+';border-radius:3px"></div></div></div></td>';
+}
+const brandCell=pageId==='curators'?'<td><span class="'+(getCuratorBrand(p.name)==='Т2'?'tag-t2':'tag-mmb')+'">'+getCuratorBrand(p.name)+'</span></td>':'';
+return'<tr><td class="rank-col"><span class="'+rc+'">'+p.rank+'</span></td><td><div class="name-cell">'+avatarHtml(p.name,34)+'<div><div style="font-weight:700;color:var(--white);white-space:nowrap">'+p.name+'</div>'+(contact?'<div style="font-size:10px;color:var(--muted)">'+contact+'</div>':'')+'</div></div></td>'+brandCell+metricCells+extraCells+'<td style="white-space:nowrap"><span style="font-family:\'Unbounded\',sans-serif;font-size:15px;color:var(--accent2);font-weight:700">'+p.itog+'</span></td><td><span class="row-btn" onclick="event.stopPropagation();openPersonDetail(\''+pageId+'\',\''+p.name.replace(/'/g,"\\'")+'\')">📊</span></td></tr>';
+}).join('');
+}
+function render(){const t=el.querySelector('table');if(t){t.querySelector('thead').innerHTML=buildThead().replace(/<thead>|<\/thead>/g,'');t.querySelector('tbody').innerHTML=buildRows(sortedFiltered());}}
+const reportMenus={
+curators:'<button class="report-btn" onclick="showReportMenu(\'curators\')">📄 Отчёты ▾</button><div id="report-menu-curators" class="report-menu" style="display:none"><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'settings\')">⚙️ Настройки</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'credit\')">💳 Кредит</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'vmp\')">📐 ВМП</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'aks_priority\')">⭐ Акс Приоритет</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'sto\')">📱 СТО</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'insurance\')">🛡 Страховки</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'shares\')">📊 По долям</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'revenue\')">💰 Выручка</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'aks\')">🛍 Аксессуары</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'services\')">📡 Услуги</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'rating\')">🏆 Рейтинг кураторов</div></div>',
+topk:'<button class="report-btn" onclick="showReportMenu(\'topk\')">📄 Отчёты ▾</button><div id="report-menu-topk" class="report-menu" style="display:none"><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'settings\')">⚙️ Настройки</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'credit\')">💳 Кредит</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'vmp\')">📐 ВМП</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'aks_priority\')">⭐ Акс Приоритет</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'sto\')">📱 СТО</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'insurance\')">🛡 Страховки</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'shares\')">📊 По долям</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'revenue\')">💰 Выручка</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'aks\')">🛍 Аксессуары</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'services\')">📡 Услуги</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'rating\')">🏆 Рейтинг Топ Команды</div></div>',
+zam:''
+};
+el.innerHTML='<div class="sec-hdr"><div class="sec-title">'+title+'</div><div class="sec-badge">'+filteredArr.length+' чел.</div><div class="sec-line"></div></div><div class="filter-row"><input class="search-input" placeholder="Поиск по имени..." oninput="__rFilter_'+pageId+'(this.value)">'+(reportMenus[pageId]||'')+'</div><div class="rtable-wrap"><table class="rtable">'+buildThead()+'<tbody>'+buildRows(sortedFiltered())+'</tbody></table></div>';
+window['__rSort_'+pageId]=function(key){if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=key==='rank'?1:-1;}render();};
+window['__rFilter_'+pageId]=function(q){filterQ=q;render();};
 }
 
 function shopRatingPct(s){
@@ -776,7 +788,84 @@ const vals=keys.map(k=>{const m=s[k];if(!m||!m.plan)return null;return Math.roun
 if(!vals.length)return 0;return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
 }
 
-// ... (остальные функции renderAllShopsPage, renderShopsPage, renderProfiles, renderBdays, renderSettings остаются как в оригинале)
+function renderAllShopsPage(){
+const el=_id('page-allshops');const allShops=APP.data.shops;
+let currentShops=[...allShops];let sortKey='rating',sortDir=-1;
+let brandFilter='all',curatorFilter='all',searchQ='';
+const curators=[...new Set(allShops.map(s=>s.curator))].sort();
+function applyFilters(){let list=[...allShops];if(brandFilter!=='all')list=list.filter(s=>s.brand===brandFilter);if(curatorFilter!=='all')list=list.filter(s=>s.curator===curatorFilter);if(searchQ)list=list.filter(s=>s.name.toLowerCase().includes(searchQ.toLowerCase())||s.kod.toLowerCase().includes(searchQ.toLowerCase()));currentShops=list;}
+function refreshTable(){const tbl=_id('shop-tbl-allshops');if(tbl)tbl.innerHTML=shopTableWithRatingHtml(currentShops,sortKey,sortDir,'allshops');}
+const brandBtns='<button class="filter-btn'+(brandFilter==='all'?' active':'')+'" onclick="__allBrand(\'all\',this)">Все ('+allShops.length+')</button><button class="filter-btn'+(brandFilter==='Т2'?' active':'')+'" onclick="__allBrand(\'Т2\',this)">Т2 ('+allShops.filter(s=>s.brand==='Т2').length+')</button><button class="filter-btn'+(brandFilter==='ММБ'?' active':'')+'" onclick="__allBrand(\'ММБ\',this)">ММБ ('+allShops.filter(s=>s.brand==='ММБ').length+')</button><button class="report-btn" onclick="showReportMenu(\'allshops\')">📄 Отчёты ▾</button>';
+el.innerHTML='<div class="sec-hdr"><div class="sec-title">Все магазины</div><div class="sec-badge">'+allShops.length+' точек</div><div class="sec-line"></div></div><div class="filter-row" id="all-brand-btns">'+brandBtns+'</div><div class="filter-row"><select class="sort-select" onchange="__allCurator(this.value)"><option value="all">Все кураторы</option>'+curators.map(c=>'<option value="'+c+'">'+c.split(' ').slice(0,2).join(' ')+'</option>').join('')+'</select><input class="search-input" placeholder="Поиск по коду / названию..." oninput="__allSearch(this.value)"></div><div id="report-menu-allshops" class="report-menu" style="display:none"><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:2px 6px 6px;font-weight:700;width:100%">ТОП 20 — ВСЕ МАГАЗИНЫ</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'settings\',\'top\')">⚙️ Настройки топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'credit\',\'top\')">💳 Кредит топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'vmp\',\'top\')">📐 ВМП топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'sto\',\'top\')">📱 СТО топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'insurance\',\'top\')">🛡 Страховки топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'revenue\',\'top\')">💰 Выручка топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'aks\',\'top\')">🛍 Аксессуары топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'rating\',\'top\')">🏆 Рейтинг топ20</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0;width:100%"></div><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:2px 6px 6px;font-weight:700;width:100%">АНТИТОП 20 — ВСЕ МАГАЗИНЫ</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'settings\',\'bot\')" style="color:var(--red)">⚙️ Настройки антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'credit\',\'bot\')" style="color:var(--red)">💳 Кредит антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'vmp\',\'bot\')" style="color:var(--red)">📐 ВМП антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'sto\',\'bot\')" style="color:var(--red)">📱 СТО антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'insurance\',\'bot\')" style="color:var(--red)">🛡 Страховки антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'revenue\',\'bot\')" style="color:var(--red)">💰 Выручка антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'aks\',\'bot\')" style="color:var(--red)">🛍 Аксессуары антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\'allshops\',\'rating\',\'bot\')" style="color:var(--red)">🏆 Рейтинг антитоп20</div></div><div id="shop-tbl-allshops">'+shopTableWithRatingHtml(currentShops,sortKey,sortDir,'allshops')+'</div>';
+window.__allBrand=function(b,btn){document.querySelectorAll('#all-brand-btns .filter-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');brandFilter=b;applyFilters();refreshTable();};
+window.__allCurator=function(c){curatorFilter=c;applyFilters();refreshTable();};
+window.__allSearch=function(q){searchQ=q;applyFilters();refreshTable();};
+window['__shopColSort_allshops']=function(key){if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=(key==='kod'||key==='name')?1:-1;}refreshTable();};
+}
+
+function shopTableWithRatingHtml(shops,sortKey,sortDir,pageId){
+if(!shops.length)return'<div class="empty-state">Нет данных</div>';
+sortKey=sortKey||'rating';sortDir=sortDir||-1;pageId=pageId||'allshops';
+const sorted=[...shops].sort((a,b)=>{
+if(sortKey==='rating')return(shopRatingPct(a)-shopRatingPct(b))*sortDir;
+if(sortKey==='kod')return a.kod.localeCompare(b.kod)*sortDir;
+if(sortKey==='name')return a.name.localeCompare(b.name)*sortDir;
+if(sortKey==='vmp')return((a.vmp||0)-(b.vmp||0))*sortDir;
+const [mKey,mSub]=sortKey.split('_');
+if(mSub==='pct'){const ap=a[mKey]?.plan||0,af=a[mKey]?.forecast||0;const bp=b[mKey]?.plan||0,bf=b[mKey]?.forecast||0;return((ap>0?af/ap:0)-(bp>0?bf/bp:0))*sortDir;}
+return((a[mKey]?.[mSub]||0)-(b[mKey]?.[mSub]||0))*sortDir;
+});
+function thS(key,label){const cls=key===sortKey?(sortDir===1?'asc':'desc'):'';return'<th class="rth-sortable '+cls+'" onclick="__shopColSort_'+pageId+'(\''+key+'\')">'+label+'</th>';}
+function subSort(key,label){const cls=key===sortKey?(sortDir===1?'asc':'desc'):'';return'<span class="rth-sortable '+cls+'" style="font-size:9px;cursor:pointer;white-space:nowrap" onclick="__shopColSort_'+pageId+'(\''+key+'\')">'+label+'</span>';}
+const rows=sorted.map((s,idx)=>{
+const rPct=shopRatingPct(s);const vmpP=s.vmp>0?Math.round(s.vmp*100):0;
+const rc=idx===0?'r1':idx===1?'r2':idx===2?'r3':'rn';
+return'<tr style="cursor:pointer" onclick="openShopDetail(\''+s.kod.replace(/'/g,"\\'")+'\')"><td class="sticky-col rank-col"><span class="'+rc+'">'+(idx+1)+'</span></td><td class="sticky-col2"><span style="font-weight:800;color:var(--white)">'+s.kod+'</span></td><td><div style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)">'+s.name+'</div></td><td><span class="'+(s.brand==='Т2'?'tag-t2':'tag-mmb')+'">'+s.brand+'</span></td><td style="font-size:12px;color:var(--white);font-weight:700;white-space:nowrap">'+s.curator.split(' ').slice(0,2).join(' ')+'</td><td><span class="chip '+chipCls(rPct)+'" style="font-size:15px;font-weight:900;padding:4px 12px">'+rPct+'%</span></td>'+METRIC_DEFS.map(d=>metricCell(s[d.key])).join('')+'<td><span class="chip '+chipCls(vmpP)+'" style="font-weight:800">'+vmpP+'%</span></td></tr>';
+}).join('');
+const metricThs=METRIC_DEFS.map(d=>'<th style="white-space:nowrap;min-width:115px;padding:6px 10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--white);font-weight:700;margin-bottom:4px">'+d.label+'</div><div style="display:flex;gap:5px;align-items:center">'+subSort(d.key+'_pct','%пр')+'<span style="color:var(--border2)">·</span>'+subSort(d.key+'_plan','план')+'<span style="color:var(--border2)">·</span>'+subSort(d.key+'_fact','факт')+'</div></th>').join('');
+return'<div class="metric-table-wrap"><table class="metric-table"><thead><tr>'+thS('rating','#')+thS('kod','Код')+thS('name','Магазин')+'<th>Бренд</th><th>Куратор</th><th class="rth-sortable '+(sortKey==='rating'?(sortDir===1?'asc':'desc'):'')+'" onclick="__shopColSort_'+pageId+'(\'rating\')"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--white);font-weight:700">Рейтинг</div><div style="font-size:9px;opacity:.6">СТО·Аксы·Кред·Усл</div></th>'+metricThs+'<th class="rth-sortable '+(sortKey==='vmp'?(sortDir===1?'asc':'desc'):'')+'" onclick="__shopColSort_'+pageId+'(\'vmp\')">ВМП</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+function renderShopsPage(pageId){
+const brand=pageId==='t2'?'Т2':'ММБ';const el=_id('page-'+pageId);
+const allShops=APP.data.shops.filter(s=>s.brand===brand);
+let currentShops=[...allShops];let sortKey='kod',sortDir=1;
+let curatorFilter='all',searchQ='';
+const curators=[...new Set(allShops.map(s=>s.curator))].sort();
+function applyFilters(){let list=[...allShops];if(curatorFilter!=='all')list=list.filter(s=>s.curator===curatorFilter);if(searchQ)list=list.filter(s=>s.name.toLowerCase().includes(searchQ.toLowerCase())||s.kod.toLowerCase().includes(searchQ.toLowerCase()));currentShops=list;}
+function refreshTable(){const tbl=_id('shop-tbl-'+pageId);if(tbl)tbl.innerHTML=shopTableHtml(currentShops,sortKey,sortDir,pageId);}
+const cBtns=['<button class="filter-btn active" onclick="__shopCurator_'+pageId+'(\'all\',this)">Все ('+allShops.length+')</button>'].concat(curators.map(c=>{const cnt=allShops.filter(s=>s.curator===c).length;const sh=c.split(' ').slice(0,2).join(' ');return '<button class="filter-btn" data-c="'+c+'" onclick="__shopCurator_'+pageId+'(\''+c.replace(/'/g,"\\'")+'\',this)">'+sh+' ('+cnt+')</button>';})).join('');
+el.innerHTML='<div class="sec-hdr"><div class="sec-title">Магазины '+brand+'</div><div class="sec-badge">'+allShops.length+' точек</div><div class="sec-line"></div></div><div class="filter-row">'+cBtns+'<button class="report-btn" onclick="showReportMenu(\'shops_'+pageId+'\')">📄 Отчёты ▾</button><input class="search-input" placeholder="Поиск по коду / названию..." oninput="__shopSearch_'+pageId+'(this.value)"></div><div id="report-menu-shops_'+pageId+'" class="report-menu" style="display:none"><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:2px 6px 6px;font-weight:700;width:100%">ТОП 20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'settings\',\'top\')">⚙️ Настройки топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'credit\',\'top\')">💳 Кредит топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'vmp\',\'top\')">📐 ВМП топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'sto\',\'top\')">📱 СТО топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'insurance\',\'top\')">🛡 Страховки топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'revenue\',\'top\')">💰 Выручка топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'aks\',\'top\')">🛍 Аксессуары топ20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'rating\',\'top\')">🏆 Рейтинг топ20</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0;width:100%"></div><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:2px 6px 6px;font-weight:700;width:100%">АНТИТОП 20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'settings\',\'bot\')" style="color:var(--red)">⚙️ Настройки антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'credit\',\'bot\')" style="color:var(--red)">💳 Кредит антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'vmp\',\'bot\')" style="color:var(--red)">📐 ВМП антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'sto\',\'bot\')" style="color:var(--red)">📱 СТО антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'insurance\',\'bot\')" style="color:var(--red)">🛡 Страховки антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'revenue\',\'bot\')" style="color:var(--red)">💰 Выручка антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'aks\',\'bot\')" style="color:var(--red)">🛍 Аксессуары антитоп20</div><div class="report-menu-item" onclick="genShopsReportFiltered(\''+pageId+'\',\'rating\',\'bot\')" style="color:var(--red)">🏆 Рейтинг антитоп20</div></div><div id="shop-tbl-'+pageId+'">'+shopTableHtml(currentShops,sortKey,sortDir,pageId)+'</div>';
+window['__shopCurator_'+pageId]=function(curator,btn){document.querySelectorAll('#page-'+pageId+' .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');curatorFilter=curator;applyFilters();refreshTable();};
+window['__shopSearch_'+pageId]=function(q){searchQ=q;applyFilters();refreshTable();};
+window['__shopColSort_'+pageId]=function(key){if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=(key==='kod'||key==='name')?1:-1;}refreshTable();};
+}
+
+// ИСПРАВЛЕНИЕ 3: Убрана вторая кнопка у Хатипова в профилях
+function renderProfiles(){
+const D=APP.data;
+const all=[];
+D.ratings.curators.filter(p=>D.shops.some(s=>s.curator===p.name)).forEach(p=>all.push({...p,role:'curator',roleLabel:'Куратор'}));
+D.ratings.topk.filter(p=>D.shops.some(s=>s.topk===p.name)).forEach(p=>all.push({...p,role:'topk',roleLabel:'Топ Команда'}));
+D.ratings.zam.filter(p=>D.shops.some(s=>s.zam===p.name)).forEach(p=>all.push({...p,role:'zam',roleLabel:'Зам РОП'}));
+const seen=new Set(),uniq=[];
+all.forEach(p=>{if(!seen.has(p.name)){seen.add(p.name);uniq.push(p);}});
+let html='<div class="sec-hdr"><div class="sec-title">Профили</div><div class="sec-badge">'+uniq.length+' человек</div><div class="sec-line"></div></div>';
+html+='<div class="filter-row"><button class="filter-btn active" onclick="filterProfiles(\'all\',this)">Все</button><button class="filter-btn" onclick="filterProfiles(\'curator\',this)">Кураторы</button><button class="filter-btn" onclick="filterProfiles(\'topk\',this)">Топ Команда</button><button class="filter-btn" onclick="filterProfiles(\'zam\',this)">Замы</button></div>';
+function buildCards(list){
+return'<div class="profiles-grid">'+list.map(p=>{
+const pr=APP.profiles[p.name]||{};
+const myShops=D.shops.filter(s=>(p.role==='curator'&&s.curator===p.name)||(p.role==='topk'&&s.topk===p.name)||(p.role==='zam'&&s.zam===p.name));
+const revForecast=myShops.reduce((s,sh)=>s+(sh.revenue?.forecast||0),0);
+const revPlan=myShops.reduce((s,sh)=>s+(sh.revenue?.plan||0),0);
+const revPct=revPlan>0?Math.round(revForecast/revPlan*100):0;
+return'<div class="profile-card" data-role="'+p.role+'"><div class="profile-avatar">'+(pr.photo?'<img src="'+pr.photo+'">':'<span>'+initials(p.name)+'</span>')+'<div class="profile-edit-ico" onclick="event.stopPropagation();openPM(\''+p.name.replace(/'/g,"\\'")+'\')">✎</div></div><div class="profile-name">'+p.name+'</div><div class="profile-role role-'+p.role+'">'+p.roleLabel+' · #'+p.rank+'</div>'+(pr.birthday?'<div class="profile-contact">🎂 '+formatBirthday(pr.birthday)+'</div>':'')+(pr.phone?'<div class="profile-contact">📞 '+pr.phone+'</div>':'')+(pr.tg?'<div class="profile-contact">✈ '+pr.tg+'</div>':'')+'<div class="profile-stats"><div class="pstat"><div class="pstat-val">'+myShops.length+'</div><div class="pstat-lbl">Магазинов</div></div><div class="pstat"><div class="pstat-val" style="color:'+pctColor(revPct)+'">'+revPct+'%</div><div class="pstat-lbl">Выручка</div></div><div class="pstat"><div class="pstat-val">'+p.itog+'</div><div class="pstat-lbl">ИТОГ</div></div><div class="pstat"><div class="pstat-val">'+p.rank+'</div><div class="pstat-lbl">Место</div></div></div><button class="profile-btn" onclick="openPersonDetail(\''+(p.role==='curator'?'curators':p.role==='topk'?'topk':'zam')+'\',\''+p.name.replace(/'/g,"\\'")+'\');goPage(\''+(p.role==='curator'?'curators':p.role==='topk'?'topk':'zam')+'\')">📊 Показатели и магазины →</button></div>';
+}).join('')+'</div>';
+}
+html+='<div id="profiles-list">'+buildCards(uniq)+'</div>';
+_id('page-profiles').innerHTML=html;
+window.filterProfiles=function(role,btn){document.querySelectorAll('#page-profiles .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const filtered=role==='all'?uniq:uniq.filter(p=>p.role===role);_id('profiles-list').innerHTML=buildCards(filtered);};
+}
 
 function openPM(name){
 APP.editingProfile=name;_id('pm-title').textContent=name;
@@ -825,7 +914,8 @@ const now=Date.now();
 if(APP.uploadType==='final'){const lbl=prompt('Метка архива (например: Май 2026):\nФайл сохранится в историю месяцев.','');if(lbl){setProgress(80,'Сохраняем в историю...');await DB.saveHistory(lbl,parsed);}}
 setProgress(85,'Синхронизируем...');
 const saved=await DB.saveData(parsed,'user');
-if(saved){setProgress(95,'Готово!');}
+if(saved){setProgress(95,'Готово!');console.log('Данные сохранены в Supabase');}
+else{console.warn('Supabase недоступен, сохраняем локально');}
 try{localStorage.setItem('mx_data',JSON.stringify(parsed));localStorage.setItem('mx_last_upload_ts',String(now));}catch(e){console.warn('localStorage full');}
 APP.data=parsed;updateLastUploadInfo();renderAll();updateBdayBanner();
 setProgress(100,'✓ Данные обновлены у всех пользователей!');
@@ -839,8 +929,60 @@ function setProgress(w,msg){_id('upload-fill').style.width=w+'%';_id('upload-sta
 function showUErr(msg){_id('upload-err').textContent=msg;_id('upload-err').style.display='block';_id('upload-prog').style.display='none';}
 
 function parseWorkbook(wb){
-    // ... оригинальный parseWorkbook без изменений ...
-    return{network,bештау:{total_sum:Math.round(bs),total_qty:Math.round(bq),by_shop:bbs},shops,staff,ratings};
+const wsP=wb.Sheets['Планы сети'];
+const planRows=XLSX.utils.sheet_to_json(wsP,{header:1,defval:null});
+const LM={'Товарная выручка':'revenue','Аксессуары':'aks','Страховки Т2':'insurance_t2','Страховки ММБ':'insurance_mmb','Настройки Т2':'settings_t2','Настройки ММБ':'settings_mmb','Кредит':'credit','Услуги ТОТАЛ':'services','СТО':'sto'};
+const network={};
+planRows.forEach(r=>{if(r[0]&&LM[r[0]]){const k=LM[r[0]];network[k]={label:r[0],plan_net:r[1]||0,plan_tt:r[2]||0,forecast:Math.round(r[3]||0),pct_net:Math.round((r[4]||0)*1000)/10,pct_tt:Math.round((r[5]||0)*1000)/10};}});
+const wsB=wb.Sheets['Бештау'];
+const bR=XLSX.utils.sheet_to_json(wsB,{header:1,defval:null});
+let bs=0,bq=0,bbs={};
+bR.slice(1).forEach(r=>{if(r[0]&&typeof r[3]==='number'&&r[3]>0){bs+=r[3];bq+=(r[2]||0);bbs[String(r[0])]={sum:Math.round(r[3]),qty:Math.round(r[2]||0)};}});
+const wsM=wb.Sheets['Прогноз продаж'];
+const mR=XLSX.utils.sheet_to_json(wsM,{header:1,defval:null});
+const VALID=['ММБ','Т2'];
+const shops=[];
+function cn(s){return typeof s==='string'?s.replace(/\n/g,' ').replace(/\xa0/g,' ').replace(/\s+/g,' ').trim():'';}
+function sp(f,p){return(p&&p!==0)?f/p:0;}
+function met(r,pc,fc,fcc){const p=r[pc]||0,f=r[fc]||0,fc2=r[fcc]||0;return{plan:Math.round(p),fact:Math.round(f),forecast:Math.round(fc2),pct:sp(f,p)};}
+mR.slice(2).forEach(r=>{
+if(!r[0]||!r[1]||typeof r[1]!=='string'||!VALID.includes(r[5]))return;
+const vmp=typeof r[108]==='number'?r[108]:0;
+const aksPriorityPlan=typeof r[20]==='number'?r[20]:0;
+const aksPriorityFact=typeof r[21]==='number'?r[21]:0;
+const aksPriorityFc=typeof r[22]==='number'?r[22]:0;
+shops.push({kod:String(r[0]),name:r[1],brand:r[5],curator:cn(r[2]),topk:cn(r[3]),zam:cn(r[4]),
+revenue:met(r,6,7,8),sto:met(r,13,14,15),aks:met(r,33,34,35),
+aks_priority:{plan:Math.round(aksPriorityPlan),fact:Math.round(aksPriorityFact),forecast:Math.round(aksPriorityFc),pct:sp(aksPriorityFc,aksPriorityPlan)},
+settings:met(r,41,42,43),insurance:met(r,49,50,51),credit:met(r,57,58,59),services:met(r,64,65,66),vmp:Math.round(vmp*10000)/10000});
+});
+const METRICS=['Товарка','Аксессуары','Кредит','Услуги','ВМП','АКС Приоритет'];
+function exBlock(si,ei){
+const res=[];
+for(let i=si+1;i<ei;i++){
+const r=mR[i];const name=cn(String(r[5]||''));
+if(!name)continue;
+const itog=r[18],rank=r[19];
+if(typeof itog!=='number')continue;
+const coeffs=[0,1,2,3,4,5].map(j=>typeof r[6+j]==='number'?Math.round(r[6+j]*10000)/10000:0);
+const places=[0,1,2,3,4,5].map(j=>typeof r[12+j]==='number'?Math.round(r[12+j]):0);
+res.push({name,coeffs,places,itog:Math.round(itog*10)/10,rank:Math.round(rank)||0,metrics:METRICS});
+}
+res.sort((a,b)=>a.rank-b.rank);return res;
+}
+let tI=-1,cI=-1,zI=-1,wI=-1;
+mR.forEach((r,i)=>{
+if(r[18]==='ИТОГ'&&r[19]==='Рейтинг: '){const m=cn(String(r[5]||''));if(m==='ТОП команда')tI=i;else if(m==='Куратор:')cI=i;else if(m==='Зам')zI=i;}
+if(r[5]==='Вес:')wI=i;
+});
+const ratings={topk:tI>=0?exBlock(tI,wI>=0?wI:tI+25):[],curators:cI>=0?exBlock(cI,zI>=0?zI:cI+30):[],zam:zI>=0?exBlock(zI,zI+5):[]};
+function uq(arr){const s=new Set(),o=[];arr.forEach(x=>{if(x&&!s.has(x)){s.add(x);o.push(x);}});return o;}
+const staff={curators:uq(shops.map(s=>s.curator)),topk:uq(shops.map(s=>s.topk)),zam:uq(shops.map(s=>s.zam))};
+ratings.topk=ratings.topk.filter(p=>staff.topk.includes(p.name));
+ratings.curators=ratings.curators.filter(p=>staff.curators.includes(p.name));
+ratings.zam=ratings.zam.filter(p=>staff.zam.includes(p.name));
+console.log('Рейтинги отфильтрованы:',ratings.topk.length+'топк,',ratings.curators.length+'кур.,',ratings.zam.length+'зам.');
+return{network,bештау:{total_sum:Math.round(bs),total_qty:Math.round(bq),by_shop:bbs},shops,staff,ratings};
 }
 
 function showReportMenu(id){const el=_id('report-menu-'+id);if(!el)return;el.style.display=el.style.display==='none'?'flex':'none';}
@@ -852,69 +994,150 @@ pctColor(p){return p>=100?RPT.GREEN:p>=80?RPT.YELLOW:RPT.RED;},
 fmt(n){if(!n||isNaN(n))return'0';return Math.round(n).toLocaleString('ru-RU');},
 roundRect(ctx,x,y,w,h,r,fill){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill();}},
 drawHeader(ctx,W,title,subtitle){
-    const grad=ctx.createLinearGradient(0,0,W,110);grad.addColorStop(0,'#0a1a35');grad.addColorStop(1,'#060e20');
-    ctx.fillStyle=grad;ctx.fillRect(0,0,W,110);
-    const lineGrad=ctx.createLinearGradient(0,0,W,0);lineGrad.addColorStop(0,'#2d8cff');lineGrad.addColorStop(0.5,'#00d4ff');lineGrad.addColorStop(1,'transparent');
-    ctx.fillStyle=lineGrad;ctx.fillRect(0,109,W,2);
-    ctx.save();ctx.translate(22,20);ctx.beginPath();ctx.moveTo(0,60);ctx.lineTo(30,0);ctx.lineTo(60,60);ctx.closePath();ctx.fillStyle='#cc2929';ctx.fill();
-    ctx.beginPath();ctx.moveTo(18,60);ctx.lineTo(30,33);ctx.lineTo(42,60);ctx.closePath();ctx.fillStyle='rgba(255,255,255,0.9)';ctx.fill();ctx.restore();
-    ctx.font='bold 18px Arial';ctx.fillStyle='#1a6fc4';ctx.fillText('МАКСИМУС',90,42);
-    ctx.font='9px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('мобильная связь и техника',90,58);
-    ctx.fillStyle='rgba(100,160,255,0.15)';ctx.fillRect(88,66,1,24);
-    ctx.font='bold 26px Arial';ctx.textAlign='center';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(title, W/2, 78);
-    if(subtitle){
-        ctx.font='12px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText(subtitle,W/2,96);
-    }
-    ctx.textAlign='left';
-    return 130;
+const grad=ctx.createLinearGradient(0,0,W,110);grad.addColorStop(0,'#0a1a35');grad.addColorStop(1,'#060e20');
+ctx.fillStyle=grad;ctx.fillRect(0,0,W,110);
+const lineGrad=ctx.createLinearGradient(0,0,W,0);lineGrad.addColorStop(0,'#2d8cff');lineGrad.addColorStop(0.5,'#00d4ff');lineGrad.addColorStop(1,'transparent');
+ctx.fillStyle=lineGrad;ctx.fillRect(0,109,W,2);
+ctx.save();ctx.translate(22,20);ctx.beginPath();ctx.moveTo(0,60);ctx.lineTo(30,0);ctx.lineTo(60,60);ctx.closePath();ctx.fillStyle='#cc2929';ctx.fill();
+ctx.beginPath();ctx.moveTo(18,60);ctx.lineTo(30,33);ctx.lineTo(42,60);ctx.closePath();ctx.fillStyle='rgba(255,255,255,0.9)';ctx.fill();ctx.restore();
+ctx.font='bold 18px Arial';ctx.fillStyle='#1a6fc4';ctx.fillText('МАКСИМУС',90,42);
+ctx.font='9px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('мобильная связь и техника',90,58);
+ctx.fillStyle='rgba(100,160,255,0.15)';ctx.fillRect(88,66,1,24);
+ctx.font='bold 24px Arial';const titleW=ctx.measureText(title).width;const titleW=ctx.measureText(title).width;const titleX=Math.max(180,(W-titleW)/2),titleY=52;
+const titleGrad=ctx.createLinearGradient(titleX-8,titleY-20,titleX+titleW+16,titleY+8);titleGrad.addColorStop(0,'rgba(45,140,255,0.15)');titleGrad.addColorStop(1,'rgba(0,212,255,0.08)');ctx.fillStyle=titleGrad;
+const padX=12,padY=8,radius=8;const bx=titleX-padX,by=titleY-22-padY/2,bw=titleW+padX*2,bh=32+padY;
+ctx.beginPath();ctx.moveTo(bx+radius,by);ctx.lineTo(bx+bw-radius,by);ctx.arcTo(bx+bw,by,bx+bw,by+radius,radius);ctx.lineTo(bx+bw,by+bh-radius);ctx.arcTo(bx+bw,by+bh,bx+bw-radius,by+bh,radius);ctx.lineTo(bx+radius,by+bh);ctx.arcTo(bx,by+bh,bx,by+bh-radius,radius);ctx.lineTo(bx,by+radius);ctx.arcTo(bx,by,bx+radius,by,radius);ctx.closePath();ctx.fill();
+ctx.strokeStyle='rgba(45,140,255,0.3)';ctx.lineWidth=1;ctx.stroke();
+const textGrad=ctx.createLinearGradient(titleX,titleY-10,titleX,titleY+10);textGrad.addColorStop(0,'#ffffff');textGrad.addColorStop(1,'#c8ddf5');ctx.fillStyle=textGrad;ctx.fillText(title,titleX,titleY);
+const now=new Date();const ds=now.toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'});ctx.font='12px Arial';ctx.fillStyle=RPT.MUTED;ctx.textAlign='right';ctx.fillText(ds,W-24,36);
+if(subtitle){ctx.font='11px Arial';ctx.fillStyle='rgba(90,115,153,0.8)';ctx.fillText(subtitle,W-24,54);}
+ctx.textAlign='left';return 120;
 },
 drawTableRow(ctx,W,y,cols,isHeader,rowPct){
-    // ... оригинальный код ...
+const ROW_H=46;
+if(isHeader){const hGrad=ctx.createLinearGradient(0,y,0,y+ROW_H);hGrad.addColorStop(0,'#0c1a30');hGrad.addColorStop(1,'#08122a');ctx.fillStyle=hGrad;ctx.fillRect(0,y,W,ROW_H);ctx.fillStyle='rgba(45,140,255,0.3)';ctx.fillRect(0,y+ROW_H-1,W,1);}
+else{const rowIdx=Math.floor((y-100)/ROW_H);const baseFill=rowIdx%2===0?'#0c1830':'#0a1428';if(rowPct!==undefined){ctx.fillStyle=rowPct>=100?'rgba(56,255,176,0.05)':rowPct>=80?'rgba(255,200,71,0.04)':'rgba(255,77,109,0.04)';}else{ctx.fillStyle=baseFill;}ctx.fillRect(0,y,W,ROW_H);ctx.fillStyle='rgba(100,160,255,0.06)';ctx.fillRect(0,y+ROW_H-1,W,1);}
+let x=0;
+cols.forEach(col=>{
+if(isHeader){ctx.font='bold 11px Arial';ctx.fillStyle='rgba(255,255,255,0.85)';ctx.textAlign='center';ctx.fillText((col.label||'').toUpperCase(),x+col.w/2,y+ROW_H/2+4);}
+else{const fontSize=col.bold?18:15;ctx.font=(col.bold?'bold ':'')+fontSize+'px Arial';ctx.fillStyle=col.color||RPT.TEXT;ctx.textAlign=col.align||'center';const tx=col.align==='left'?x+10:col.align==='right'?x+col.w-10:x+col.w/2;const val=col.value||'';if(val.endsWith('%')&&!isHeader&&col.color&&col.color!==RPT.TEXT&&col.color!==RPT.WHITE&&col.color!==RPT.MUTED){const pctNum=parseInt(val);const bgColor=col.color==='#38ffb0'||col.color===RPT.GREEN?'rgba(56,255,176,0.12)':col.color==='#ffc847'||col.color===RPT.YELLOW?'rgba(255,200,71,0.12)':'rgba(255,77,109,0.12)';const bw=Math.max(ctx.measureText(val).width+16,44);const bx=(col.align==='left'?tx-6:col.align==='right'?tx-bw+6:tx-bw/2);RPT.roundRect(ctx,bx,y+ROW_H/2-10,bw,20,5,bgColor);ctx.fillStyle=col.color;ctx.font='bold '+fontSize+'px Arial';}ctx.fillText(val,tx,y+ROW_H/2+5);if(col.sub){ctx.font='10px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText(col.sub,tx,y+ROW_H-6);}}
+x+=col.w;});ctx.textAlign='left';return y+ROW_H;
 },
+drawBar(ctx,x,y,w,pct,maxH){const barH=4;const bY=y+maxH-barH-4;ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(x,bY,w,barH);const fill=Math.min(pct/100,1)*w;ctx.fillStyle=RPT.pctColor(pct);RPT.roundRect(ctx,x,bY,Math.max(fill,2),barH,2,RPT.pctColor(pct));},
 download(canvas,filename){console.log('RPT.download:',filename,canvas.width,'x',canvas.height);try{canvas.toBlob(blob=>{if(!blob){alert('Ошибка создания изображения');return;}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename+'.png';a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},2000);},'image/png');}catch(e){alert('Ошибка генерации: '+e.message);}}
 };
 
-function showHomeReportMenu(){
-    const menu = document.createElement('div');
-    menu.style.position = 'fixed';
-    menu.style.top = '80px';
-    menu.style.right = '40px';
-    menu.style.background = '#0b1428';
-    menu.style.border = '1px solid #2d8cff';
-    menu.style.borderRadius = '12px';
-    menu.style.padding = '12px';
-    menu.style.zIndex = '10000';
-    menu.innerHTML = `
-        <div class="report-menu-item" onclick="genNetworkPerformanceReport();this.parentElement.remove()">📊 Выполнение сети</div>
-        <div class="report-menu-item" onclick="genNetworkShareReport();this.parentElement.remove()">📈 Доли показателей</div>
-    `;
-    document.body.appendChild(menu);
+function genReport(type,metric){try{if(type==='curators'){if(metric==='rating')genCuratorRatingReport();else genCuratorMetricReport(metric);}else if(type==='person'){genPersonReport(metric,'full');}}catch(e){alert('Ошибка: '+e.message);}}
+
+function genCuratorRatingReport(){
+const data=[...APP.data.ratings.curators].sort((a,b)=>a.rank-b.rank);
+const W=900,ROW_H=44;const H=96+40+ROW_H*(data.length+1)+40;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle=RPT.BG;ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,'Рейтинг кураторов','по итогам месяца');
+ctx.font='12px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Сортировка по итоговому рейтингу · Показатели: Товарка, Аксы, Кредит, Услуги, ВМП, АКС Приоритет',24,y+20);y+=36;
+const COLS=[{label:'#',w:44},{label:'Куратор',w:220},{label:'Товарка',w:80},{label:'Аксы',w:80},{label:'Кредит',w:80},{label:'Услуги',w:80},{label:'ВМП',w:80},{label:'АКС Пр.',w:80},{label:'ИТОГ',w:76},{label:'Место',w:80}];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=44;
+data.forEach((p,i)=>{const rankColors=['#ffc847','#c0c0c0','#cd7f32'];const rColor=i<3?rankColors[i]:RPT.TEXT;const mainPct=Math.round((p.coeffs[0]||0)*100);const cols=[{value:String(p.rank),bold:true,color:rColor},{value:p.name,align:'left',bold:i<3,color:i<3?RPT.WHITE:RPT.TEXT},...p.coeffs.slice(0,6).map(c=>{const pc=Math.round(c*100);return{value:pc+'%',color:RPT.pctColor(pc)};}),{value:String(p.itog),bold:true,color:RPT.CYAN},{value:'#'+p.rank,color:rColor}].map((col,ci)=>({...col,w:COLS[ci].w}));y=RPT.drawTableRow(ctx,W,y,cols,false,mainPct);});
+y+=10;ctx.font='11px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,'рейтинг_кураторов_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
 }
 
-window.genNetworkPerformanceReport = function() {
-    const metrics = ['revenue','sto','aks','insurance','settings','credit','services'];
-    const labels = ['Выручка','СТО','Аксессуары','Страховки','Настройки','Кредит','Услуги'];
-    const t2Shops = APP.data.shops.filter(s => s.brand === 'Т2');
-    const mmbShops = APP.data.shops.filter(s => s.brand === 'ММБ');
-    let html = `<div class="detail-back" onclick="navTo('home')">← Назад</div><div class="sec-hdr"><div class="sec-title">Выполнение сети</div></div>`;
-    metrics.forEach((key,i) => {
-        const t2 = sumMetric(t2Shops, key);
-        const mmb = sumMetric(mmbShops, key);
-        const totalPlan = t2.plan + mmb.plan;
-        const totalFc = t2.forecast + mmb.forecast;
-        html += kpiCardHtml(labels[i], totalFc, totalPlan, totalFc, ['c-blue','c-cyan','c-green','c-gold','c-purple','c-teal','c-lime'][i]);
-    });
-    _id('page-home').innerHTML = html;
-};
+function genCuratorMetricReport(metricKey){
+const METRIC_INFO={revenue:{label:'Товарная выручка',shopKey:'revenue'},aks:{label:'Аксессуары',shopKey:'aks'},services:{label:'Услуги',shopKey:'services'}};
+const info=METRIC_INFO[metricKey];if(!info)return;
+const curators=APP.data.staff.curators;
+const rows=curators.map(name=>{const myShops=APP.data.shops.filter(s=>s.curator===name);const plan=myShops.reduce((s,sh)=>s+(sh[info.shopKey]?.plan||0),0);const fact=myShops.reduce((s,sh)=>s+(sh[info.shopKey]?.fact||0),0);const fc=myShops.reduce((s,sh)=>s+(sh[info.shopKey]?.forecast||0),0);const pct=plan>0?Math.round(fc/plan*100):0;return{name,plan,fact,fc,pct,shops:myShops.length};}).sort((a,b)=>b.pct-a.pct);
+const W=860,ROW_H=48;const H=96+40+ROW_H*(rows.length+1)+50;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle=RPT.BG;ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,info.label+' — по кураторам','сортировка по % прогноза ↓');
+ctx.font='12px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Данные из ежедневного файла · % = прогноз / план',24,y+20);y+=36;
+const COLS=[{label:'#',w:44},{label:'Куратор',w:230},{label:'% прогноза',w:110},{label:'Прогноз',w:110},{label:'План',w:110},{label:'Факт',w:110},{label:'',w:56}];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=44;
+rows.forEach((r,i)=>{const cols=[{value:String(i+1),bold:true,color:i<3?['#ffc847','#c0c0c0','#cd7f32'][i]:RPT.MUTED},{value:r.name,align:'left',color:RPT.TEXT},{value:String(r.shops),color:RPT.MUTED},{value:r.pct+'%',bold:true,color:RPT.pctColor(r.pct)},{value:RPT.fmt(r.fc),bold:true,color:RPT.WHITE},{value:RPT.fmt(r.plan),color:RPT.MUTED},{value:RPT.fmt(r.fact),color:RPT.pctColor(r.plan>0?Math.round(r.fact/r.plan*100):0)},{value:'',w:56}].map((col,ci)=>({...col,w:COLS[ci].w}));y=RPT.drawTableRow(ctx,W,y,cols,false,r.pct);RPT.drawBar(ctx,44+230+90,y-8,110+110+110,r.pct,8);});
+y+=14;ctx.font='11px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,info.label.replace(/ /g,'_')+'_кураторы_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
 
-window.genNetworkShareReport = function() {
-    alert('Отчёт "Доли" сформирован (реализация через canvas доступна по запросу)');
-    // Можно расширить на полный PNG-отчёт
-};
+function genCuratorMetricReport2(curatorName,metricKey){
+const METRIC_INFO={revenue:{label:'Товарная выручка',shopKey:'revenue'},aks:{label:'Аксессуары',shopKey:'aks'},services:{label:'Услуги',shopKey:'services'}};
+const info=METRIC_INFO[metricKey];if(!info)return;
+const myShops=APP.data.shops.filter(s=>s.curator===curatorName);
+if(!myShops.length){alert('Нет магазинов');return;}
+const rows=[...myShops].map(s=>{const m=s[info.shopKey];const pct=m.plan>0?Math.round(m.forecast/m.plan*100):0;const fPct=m.plan>0?Math.round(m.fact/m.plan*100):0;return{...s,pct,fPct,m};}).sort((a,b)=>b.pct-a.pct);
+const W=860,ROW_H=44;const H=96+40+ROW_H*(rows.length+1)+50;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle=RPT.BG;ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,info.label+' · '+curatorName.split(' ')[0],myShops.length+' магазинов · сортировка ↓');
+ctx.font='12px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Сортировка по % прогноза (убывание)',24,y+20);y+=36;
+const COLS=[{label:'#',w:40},{label:'Код',w:80},{label:'Магазин',w:200},{label:'Бренд',w:60},{label:'%пр',w:80},{label:'Прогноз',w:110},{label:'План',w:110},{label:'Факт',w:100},{label:'%факта',w:80}];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+rows.forEach((r,i)=>{const cols=[{value:String(i+1),color:i<3?['#ffc847','#c0c0c0','#cd7f32'][i]:RPT.MUTED},{value:r.kod,align:'left',bold:true,color:RPT.WHITE},{value:r.name.slice(0,28),align:'left',color:RPT.TEXT},{value:r.brand,color:r.brand==='Т2'?RPT.BLUE:'#a78bfa'},{value:r.pct+'%',bold:true,color:RPT.pctColor(r.pct)},{value:RPT.fmt(r.m.forecast),bold:true,color:RPT.WHITE},{value:RPT.fmt(r.m.plan),color:RPT.MUTED},{value:RPT.fmt(r.m.fact),color:RPT.pctColor(r.fPct)},{value:r.fPct+'%',color:RPT.pctColor(r.fPct)}].map((col,ci)=>({...col,w:COLS[ci].w}));y=RPT.drawTableRow(ctx,W,y,cols,false,r.pct);RPT.drawBar(ctx,40+80+200+60+80,y-8,110+110+100,r.pct,8);});
+y+=14;ctx.font='11px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,info.label+'_'+curatorName.split(' ')[0]+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
 
-// ==================== ЗАГРУЗКА И ИНИЦИАЛИЗАЦИЯ ====================
+function genPersonReport(curatorName,section){
+const myShops=APP.data.shops.filter(s=>s.curator===curatorName||s.topk===curatorName||s.zam===curatorName);
+if(!myShops.length){alert('Нет магазинов');return;}
+if(section==='all'){genPersonSection_full(curatorName,myShops);setTimeout(()=>genPersonSection_vmp(curatorName,myShops),300);setTimeout(()=>genPersonSection_shops(curatorName,myShops),600);return;}
+if(section==='full')genPersonSection_full(curatorName,myShops);
+if(section==='vmp')genPersonSection_vmp(curatorName,myShops);
+if(section==='shops')genPersonSection_shops(curatorName,myShops);
+}
+
+function genPersonSection_full(curatorName,myShops){
+const SHOW=[{key:'revenue',label:'Выручка'},{key:'sto',label:'СТО'},{key:'aks',label:'Акс'},{key:'settings',label:'Настр'},{key:'insurance',label:'Страх'},{key:'credit',label:'Кред'},{key:'services',label:'Усл'}];
+const W=1600,ROW_H=68;const H=120+40+ROW_H*(myShops.length+1)+50;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle=RPT.BG;ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,'Выполнение планов · '+curatorName.split(' ')[0],myShops.length+' магазинов');
+ctx.font='11px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Прогноз / План / Факт по каждому магазину',24,y+18);y+=32;
+const COLS=[{label:'#',w:40},{label:'Код',w:70},{label:'Магазин',w:200},{label:'Бренд',w:55}];
+SHOW.forEach(m=>{COLS.push({label:m.label,w:110});});
+COLS.push({label:'ВМП',w:60},{label:'',w:40});
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+const sorted=[...myShops].map(s=>({...s,rPct:shopRatingPct(s)})).sort((a,b)=>b.rPct-a.rPct);
+function drawMetricCell(ctx,x,y,w,h,m){const fcP=m.plan>0?Math.round(m.forecast/m.plan*100):0;const factP=m.plan>0?Math.round(m.fact/m.plan*100):0;const c=fcP>=100?RPT.GREEN:fcP>=80?RPT.YELLOW:RPT.RED;const cFact=factP>=100?RPT.GREEN:factP>=80?RPT.YELLOW:RPT.RED;ctx.font='bold 13px Arial';ctx.fillStyle=c;ctx.textAlign='center';ctx.fillText(fcP+'%',x+w/2,y+16);ctx.font='9px Arial';ctx.fillStyle='rgba(200,225,255,0.7)';ctx.fillText('ПЛ: '+RPT.fmt(m.plan),x+w/2,y+30);ctx.fillStyle=cFact;ctx.fillText('ФА: '+RPT.fmt(m.fact),x+w/2,y+42);ctx.fillStyle='rgba(200,225,255,0.6)';ctx.fillText('ПР: '+RPT.fmt(m.forecast),x+w/2,y+54);const barW=w-10,barH=3,barX=x+5,barY=y+h-8;ctx.fillStyle='rgba(255,255,255,0.06)';ctx.fillRect(barX,barY,barW,barH);ctx.fillStyle=c;ctx.fillRect(barX,barY,Math.min(fcP/100,1)*barW,barH);ctx.textAlign='left';}
+sorted.forEach((s,i)=>{const rowIdx=i;const baseFill=rowIdx%2===0?'#0c1830':'#0a1428';ctx.fillStyle=baseFill;ctx.fillRect(0,y,W,ROW_H);ctx.fillStyle='rgba(100,160,255,0.06)';ctx.fillRect(0,y+ROW_H-1,W,1);let x=0;const rankColors=['#ffc847','#c0c0c0','#cd7f32'];const rc=i<3?rankColors[i]:RPT.MUTED;ctx.font='bold 14px Arial';ctx.fillStyle=rc;ctx.textAlign='center';ctx.fillText(String(i+1),x+20,y+ROW_H/2+5);x+=40;ctx.font='bold 12px Arial';ctx.fillStyle=RPT.WHITE;ctx.textAlign='left';ctx.fillText(s.kod,x+5,y+ROW_H/2+5);x+=70;ctx.font='11px Arial';ctx.fillStyle=RPT.TEXT;ctx.fillText(s.name.slice(0,26),x+5,y+ROW_H/2+5);x+=200;ctx.font='10px Arial';ctx.fillStyle=s.brand==='Т2'?RPT.BLUE:'#a78bfa';ctx.fillText(s.brand,x+5,y+ROW_H/2+5);x+=55;SHOW.forEach(m=>{drawMetricCell(ctx,x,y,110,ROW_H,s[m.key]||{plan:0,fact:0,forecast:0});x+=110;});const vmpPct=Math.round(s.vmp*100);const vmpC=vmpPct>=100?RPT.GREEN:vmpPct>=80?RPT.YELLOW:RPT.RED;ctx.font='bold 12px Arial';ctx.fillStyle=vmpC;ctx.textAlign='center';ctx.fillText(vmpPct+'%',x+30,y+ROW_H/2+5);x+=60;ctx.textAlign='left';y+=ROW_H;});
+y+=14;ctx.font='11px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,'планы_'+curatorName.split(' ')[0]+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+function genPersonSection_vmp(curatorName,myShops){
+const sorted=[...myShops].sort((a,b)=>b.vmp-a.vmp);
+const W=1100,ROW_H=44;const H=96+40+ROW_H*(sorted.length+1)+50;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle=RPT.BG;ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,'ВМП · '+curatorName.split(' ')[0],'разбивка: Аксессуары · Настройки · Страховки');
+ctx.font='12px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Сортировка по коэффициенту ВМП ↓',24,y+20);y+=36;
+const COLS=[{label:'#',w:40},{label:'Код',w:75},{label:'Магазин',w:220},{label:'Бренд',w:58},{label:'ВМП коэф',w:85},{label:'Аксы %',w:88},{label:'Настр %',w:88},{label:'Страх %',w:88},{label:'Ср %',w:90},{label:'',w:180}];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+sorted.forEach((s,i)=>{const vmpPct=Math.round(s.vmp*100);const aksPct=s.aks?.plan>0?Math.round(s.aks.forecast/s.aks.plan*100):0;const setP=s.settings?.plan>0?Math.round(s.settings.forecast/s.settings.plan*100):0;const insPct=s.insurance?.plan>0?Math.round(s.insurance.forecast/s.insurance.plan*100):0;const avg=Math.round((aksPct+setP+insPct)/3);const cols=[{value:String(i+1),color:i<3?['#ffc847','#c0c0c0','#cd7f32'][i]:RPT.MUTED},{value:s.kod,align:'left',bold:true,color:RPT.WHITE},{value:s.name.slice(0,22),align:'left',color:RPT.TEXT},{value:s.brand,color:s.brand==='Т2'?RPT.BLUE:'#a78bfa'},{value:s.vmp.toFixed(3),bold:true,color:RPT.pctColor(vmpPct)},{value:aksPct+'%',color:RPT.pctColor(aksPct)},{value:setP+'%',color:RPT.pctColor(setP)},{value:insPct+'%',color:RPT.pctColor(insPct)},{value:avg+'%',bold:true,color:RPT.pctColor(avg)},{value:'',w:108}].map((col,ci)=>({...col,w:COLS[ci].w}));y=RPT.drawTableRow(ctx,W,y,cols,false,vmpPct);RPT.drawBar(ctx,40+75+175+58+85+88+88+88+75,y-8,98,avg,8);});
+y+=14;ctx.font='11px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,'ВМП_'+curatorName.split(' ')[0]+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+function genPersonSection_shops(curatorName,myShops){
+const sorted=[...myShops].map(s=>({...s,rPct:shopRatingPct(s)})).sort((a,b)=>b.rPct-a.rPct);
+const W=1200,ROW_H=44;const H=96+40+ROW_H*(sorted.length+1)+50;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle=RPT.BG;ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,'Рейтинг магазинов · '+curatorName.split(' ')[0],sorted.length+' точек · СТО·Аксы·Кредит·Услуги');
+ctx.font='12px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Рейтинг = среднее % прогноза (СТО + Аксессуары + Кредит + Услуги) · сортировка ↓',24,y+20);y+=36;
+const COLS=[{label:'#',w:40},{label:'Код',w:75},{label:'Магазин',w:220},{label:'Бренд',w:55},{label:'Рейтинг',w:80},{label:'СТО %',w:80},{label:'Аксы %',w:80},{label:'Кредит %',w:82},{label:'Услуги %',w:82},{label:'Выручка %',w:100},{label:'',w:150}];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+sorted.forEach((s,i)=>{const stoPct=s.sto?.plan>0?Math.round(s.sto.forecast/s.sto.plan*100):0;const aksPct=s.aks?.plan>0?Math.round(s.aks.forecast/s.aks.plan*100):0;const credPct=s.credit?.plan>0?Math.round(s.credit.forecast/s.credit.plan*100):0;const servPct=s.services?.plan>0?Math.round(s.services.forecast/s.services.plan*100):0;const revPct=s.revenue?.plan>0?Math.round(s.revenue.forecast/s.revenue.plan*100):0;const cols=[{value:String(i+1),color:i<3?['#ffc847','#c0c0c0','#cd7f32'][i]:RPT.MUTED},{value:s.kod,align:'left',bold:true,color:RPT.WHITE},{value:s.name.slice(0,22),align:'left',color:RPT.TEXT},{value:s.brand,color:s.brand==='Т2'?RPT.BLUE:'#a78bfa'},{value:s.rPct+'%',bold:true,color:RPT.pctColor(s.rPct)},{value:stoPct+'%',color:RPT.pctColor(stoPct)},{value:aksPct+'%',color:RPT.pctColor(aksPct)},{value:credPct+'%',color:RPT.pctColor(credPct)},{value:servPct+'%',color:RPT.pctColor(servPct)},{value:revPct+'%',color:RPT.pctColor(revPct)},{value:'',w:106}].map((col,ci)=>({...col,w:COLS[ci].w}));y=RPT.drawTableRow(ctx,W,y,cols,false,s.rPct);});
+y+=14;ctx.font='11px Arial';ctx.fillStyle=RPT.MUTED;ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,'магазины_'+curatorName.split(' ')[0]+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+let lastUpdateTimestamp=null,pollingInterval=null;
+async function checkForUpdates(){if(!APP.data||!APP.data.shops)return;try{const cloudData=await DB.loadData();if(!cloudData||!cloudData.data)return;const cloudTimestamp=new Date(cloudData.uploaded_at).getTime();if(lastUpdateTimestamp===null){lastUpdateTimestamp=cloudTimestamp;return;}if(cloudTimestamp>lastUpdateTimestamp){APP.data=cloudData.data;localStorage.setItem('mx_data',JSON.stringify(cloudData.data));localStorage.setItem('mx_last_upload_ts',cloudTimestamp.toString());renderAll();updateLastUploadInfo();updateBdayBanner();const n=document.createElement('div');n.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--card);border-left:4px solid var(--accent2);padding:12px 20px;border-radius:12px;z-index:9999;font-size:13px;font-weight:600;color:var(--white);box-shadow:0 8px 32px rgba(0,0,0,0.3)';n.innerHTML='📊 Данные обновлены!';document.body.appendChild(n);setTimeout(()=>n.remove(),3000);lastUpdateTimestamp=cloudTimestamp;}}catch(e){console.warn('Ошибка обновлений:',e);}}
+function startPolling(){if(pollingInterval)clearInterval(pollingInterval);pollingInterval=setInterval(checkForUpdates,30000);}
+function stopPolling(){if(pollingInterval){clearInterval(pollingInterval);pollingInterval=null;}}
+
 function renderAll(){renderHome();renderRatingPage('page-curators',APP.data.ratings.curators,'Рейтинг кураторов');renderRatingPage('page-topk',APP.data.ratings.topk,'Рейтинг · Топ Команда');renderRatingPage('page-zam',APP.data.ratings.zam,'Рейтинг замов РОП');renderAllShopsPage();renderShopsPage('t2');renderShopsPage('mmb');renderProfiles();renderBdays();renderSettings();}
 
 function doLogin(){
@@ -924,6 +1147,8 @@ localStorage.setItem('mx_auth_ts',Date.now().toString());
 _id('login-screen').style.display='none';
 _id('app').style.display='flex';
 _id('page-home').innerHTML='<div style="text-align:center;padding:80px 20px;color:var(--muted)"><div class="spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 20px"></div><div style="font-size:14px">Загружаем данные...</div></div>';
+document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+_id('page-home').classList.add('active');
 _loadAppData();
 }else{_id('login-err').textContent='Неверный логин или пароль';}
 }
@@ -971,21 +1196,153 @@ else bannerText.innerHTML='🎂 '+bdays[0].name.split(' ')[0]+' — через '
 }
 
 function renderBdays(){
-    // оригинальный код
+const el=_id('page-bdays');
+const now=new Date();
+const today=now.getMonth()*100+now.getDate();
+const bdays=[];
+Object.entries(APP.profiles).forEach(([name,pr])=>{
+if(!pr.birthday)return;
+const d=new Date(pr.birthday);
+const bday=d.getMonth()*100+d.getDate();
+let daysUntil=bday-today;
+if(daysUntil<0)daysUntil+=1200;
+bdays.push({name,daysUntil,bdayStr:formatBirthday(pr.birthday),photo:pr.photo||''});
+});
+bdays.sort((a,b)=>a.daysUntil-b.daysUntil);
+let html='<div class="sec-hdr"><div class="sec-title">Дни рождения</div><div class="sec-badge">'+bdays.length+' человек</div><div class="sec-line"></div></div><div class="bday-list">';
+bdays.forEach(b=>{
+const cls=b.daysUntil===0?'today':b.daysUntil<=7?'soon':'';
+const daysCls=b.daysUntil===0?'today':b.daysUntil<=7?'soon':'far';
+const daysText=b.daysUntil===0?'🎂 Сегодня!':b.daysUntil===1?'Завтра':b.daysUntil<=30?'через '+b.daysUntil+' дн.':'через '+b.daysUntil+' дн.';
+html+='<div class="bday-item '+cls+'"><div class="bday-avatar">'+(b.photo?'<img src="'+b.photo+'">':'<span>'+initials(b.name)+'</span>')+'</div><div class="bday-info"><div class="bday-name">'+b.name+'</div><div class="bday-date">'+b.bdayStr+'</div></div><div class="bday-days '+daysCls+'">'+daysText+'</div></div>';
+});
+if(bdays.length===0)html+='<div class="empty-state">Нет данных о днях рождения. Добавьте в профилях.</div>';
+html+='</div>';
+el.innerHTML=html;
 }
 
 let settingsAuth=false;
 function renderSettings(){
-    // оригинальный код
+const el=_id('page-settings');
+if(!settingsAuth){
+el.innerHTML='<div class="sec-hdr"><div class="sec-title">Настройки отчётов</div><div class="sec-line"></div></div><div style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:20px">🔒</div><div style="font-size:16px;color:var(--white);margin-bottom:20px">Требуется пароль</div><input class="form-input" id="settings-pass" type="password" placeholder="Введите пароль" style="max-width:300px;margin:0 auto 14px" onkeydown="if(event.key===\'Enter\')checkSettingsPass()"><button class="form-save" onclick="checkSettingsPass()" style="max-width:300px;margin:0 auto">Войти</button></div>';
+return;
+}
+const configs=JSON.parse(localStorage.getItem('mx_report_configs')||'[]');
+let html='<div class="sec-hdr"><div class="sec-title">Настройки отчётов</div><div class="sec-badge">'+configs.length+' отчётов</div><div class="sec-line"></div></div><div style="margin-bottom:16px"><button class="report-btn" onclick="openSettingsModal()">+ Добавить отчёт</button></div>';
+configs.forEach((c,i)=>{
+html+='<div class="settings-section"><div class="settings-item"><div><div class="settings-item-name">'+c.name+'</div><div class="settings-item-desc">'+c.page+' · '+c.metric+' · '+(c.type==='top'?'ТОП':'АНТИТОП')+' · '+c.count+' строк</div></div><div class="settings-item-actions"><button class="settings-btn" onclick="editReportConfig('+i+')">✎</button><button class="settings-btn danger" onclick="deleteReportConfig('+i+')">✕</button></div></div></div>';
+});
+if(configs.length===0)html+='<div class="empty-state">Нет настроенных отчётов</div>';
+el.innerHTML=html;
 }
 
-let lastUpdateTimestamp=null,pollingInterval=null;
-async function checkForUpdates(){/* оригинальный код */}
-function startPolling(){if(pollingInterval)clearInterval(pollingInterval);pollingInterval=setInterval(checkForUpdates,30000);}
-function stopPolling(){if(pollingInterval){clearInterval(pollingInterval);pollingInterval=null;}}
+function checkSettingsPass(){
+const p=_id('settings-pass').value;
+if(p==='1234567890'){settingsAuth=true;renderSettings();}
+else{alert('Неверный пароль');}
+}
 
-// Инициализация
-renderAll();
+let editingConfigIdx=-1;
+function openSettingsModal(idx){
+editingConfigIdx=idx??-1;
+const configs=JSON.parse(localStorage.getItem('mx_report_configs')||'[]');
+if(idx!==undefined&&configs[idx]){
+_id('sm-name').value=configs[idx].name;
+_id('sm-page').value=configs[idx].page;
+_id('sm-metric').value=configs[idx].metric;
+_id('sm-type').value=configs[idx].type;
+_id('sm-count').value=configs[idx].count;
+}else{
+_id('sm-name').value='';_id('sm-page').value='t2';_id('sm-metric').value='revenue';_id('sm-type').value='top';_id('sm-count').value='20';
+}
+_id('settings-modal').classList.add('show');
+}
+
+function closeSettingsModal(){_id('settings-modal').classList.remove('show');editingConfigIdx=-1;}
+
+function saveReportConfig(){
+const configs=JSON.parse(localStorage.getItem('mx_report_configs')||'[]');
+const cfg={name:_id('sm-name').value.trim(),page:_id('sm-page').value,metric:_id('sm-metric').value,type:_id('sm-type').value,count:parseInt(_id('sm-count').value)||20};
+if(!cfg.name){alert('Введите название');return;}
+if(editingConfigIdx>=0)configs[editingConfigIdx]=cfg;
+else configs.push(cfg);
+localStorage.setItem('mx_report_configs',JSON.stringify(configs));
+closeSettingsModal();renderSettings();
+}
+
+function editReportConfig(idx){openSettingsModal(idx);}
+
+function deleteReportConfig(idx){
+if(!confirm('Удалить отчёт?'))return;
+const configs=JSON.parse(localStorage.getItem('mx_report_configs')||'[]');
+configs.splice(idx,1);
+localStorage.setItem('mx_report_configs',JSON.stringify(configs));
+renderSettings();
+}
+
+function genGroupReport(groupType,metricKey){
+const METRIC_MAP={settings:{label:'Настройки',shopKey:'settings',color:'#38ffb0'},credit:{label:'Кредит',shopKey:'credit',color:'#2d8cff'},vmp:{label:'ВМП',shopKey:'vmp',color:'#ffc847'},aks_priority:{label:'Акс Приоритет',shopKey:'aks',color:'#ff6b6b'},sto:{label:'СТО',shopKey:'sto',color:'#00d4ff'},insurance:{label:'Страховки',shopKey:'insurance',color:'#a78bfa'},shares:{label:'По долям',shopKey:'revenue',color:'#2dd4bf'},revenue:{label:'Выручка',shopKey:'revenue',color:'#2d8cff'},aks:{label:'Аксессуары',shopKey:'aks',color:'#38ffb0'},services:{label:'Услуги',shopKey:'services',color:'#f59e0b'},rating:{label:'Рейтинг',shopKey:'rating',color:'#8b5cf6'}};
+const metric=METRIC_MAP[metricKey];if(!metric){alert('Неизвестный тип: '+metricKey);return;}
+let staffList,pageId,title;
+if(groupType==='curators'){staffList=APP.data.ratings.curators;pageId='curators';title='Рейтинг кураторов';}
+else if(groupType==='topk'){staffList=APP.data.ratings.topk;pageId='topk';title='Топ Команда';}
+else if(groupType==='zam'){staffList=APP.data.ratings.zam;pageId='zam';title='Замы РОП';}
+else{alert('Неизвестная группа: '+groupType);return;}
+if(!staffList||staffList.length===0){alert('Нет данных');return;}
+if(metricKey==='rating'){if(groupType==='curators')genCuratorRatingReport();else genTopkRatingReport(staffList,title);return;}
+const keyMap={curators:'curator',topk:'topk',zam:'zam'};const staffKey=keyMap[groupType];
+const rows=staffList.map(person=>{const myShops=APP.data.shops.filter(s=>s[staffKey]===person.name);const plan=myShops.reduce((s,sh)=>s+(sh[metric.shopKey]?.plan||0),0);const fact=myShops.reduce((s,sh)=>s+(sh[metric.shopKey]?.fact||0),0);const fc=myShops.reduce((s,sh)=>s+(sh[metric.shopKey]?.forecast||0),0);const pct=plan>0?Math.round(fc/plan*100):0;return{name:person.name,rank:person.rank,plan,fact,forecast:fc,pct,shops:myShops.length};}).sort((a,b)=>b.pct-a.pct);
+const W=900,ROW_H=48;const H=100+40+ROW_H*(rows.length+1)+50;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle='#060c1a';ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,metric.label+' — '+title,'сортировка по % прогноза ↓');
+ctx.font='12px Arial';ctx.fillStyle='#5a7399';ctx.fillText('Прогноз / План / Факт по каждому сотруднику',24,y+20);y+=36;
+const COLS=[{label:'#',w:50},{label:'Сотрудник',w:380},{label:'Магазинов',w:90},{label:'% прогноза',w:110},{label:'Прогноз',w:120},{label:'План',w:110},{label:'Факт',w:110},{label:'',w:30}];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+rows.forEach((r,i)=>{const rankColors=['#ffc847','#c0c0c0','#cd7f32'];const rColor=i<3?rankColors[i]:'#c8ddf5';const pctColor=r.pct>=100?'#38ffb0':r.pct>=80?'#ffc847':'#ff4d6d';const cols=[{value:String(r.rank),bold:true,color:rColor},{value:r.name,align:'left',color:'#eaf2ff',bold:i<3},{value:String(r.shops),color:'#5a7399'},{value:r.pct+'%',bold:true,color:pctColor},{value:RPT.fmt(r.forecast),bold:true,color:'#eaf2ff'},{value:RPT.fmt(r.plan),color:'#5a7399'},{value:RPT.fmt(r.fact),color:pctColor},{value:'',w:30}].map((col,ci)=>({...col,w:COLS[ci].w}));y=RPT.drawTableRow(ctx,W,y,cols,false,r.pct);RPT.drawBar(ctx,50+280+90,y-10,110+120+110+110,r.pct,10);});
+y+=14;ctx.font='11px Arial';ctx.fillStyle='#5a7399';ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,metric.label.replace(/ /g,'_')+'_'+groupType+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+function genTopkRatingReport(staffList,title){
+const W=900,ROW_H=48;const H=100+40+ROW_H*(staffList.length+1)+50;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle='#060c1a';ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,title,'итоговый рейтинг');
+ctx.font='12px Arial';ctx.fillStyle='#5a7399';ctx.fillText('Сортировка по итоговому рейтингу',24,y+20);y+=36;
+const COLS=[{label:'#',w:50},{label:'Сотрудник',w:350},{label:'ИТОГ',w:100},{label:'Место',w:100},{label:'',w:300}];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+const sorted=[...staffList].sort((a,b)=>a.rank-b.rank);
+sorted.forEach((p,i)=>{const rankColors=['#ffc847','#c0c0c0','#cd7f32'];const rColor=i<3?rankColors[i]:'#c8ddf5';const cols=[{value:String(p.rank),bold:true,color:rColor},{value:p.name,align:'left',color:'#eaf2ff',bold:i<3},{value:String(p.itog),bold:true,color:'#00d4ff'},{value:'#'+p.rank,color:rColor},{value:'',w:300}].map((col,ci)=>({...col,w:COLS[ci].w}));y=RPT.drawTableRow(ctx,W,y,cols,false);});
+y+=14;ctx.font='11px Arial';ctx.fillStyle='#5a7399';ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,'рейтинг_'+title.toLowerCase().replace(/ /g,'_')+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+function genShopsReportFiltered(pageId,metricKey,type){
+const METRIC_MAP={settings:{label:'Настройки',key:'settings',color:'#38ffb0'},credit:{label:'Кредит',key:'credit',color:'#2d8cff'},vmp:{label:'ВМП',key:'vmp',color:'#ffc847'},sto:{label:'СТО',key:'sto',color:'#00d4ff'},insurance:{label:'Страховки',key:'insurance',color:'#a78bfa'},revenue:{label:'Выручка',key:'revenue',color:'#2d8cff'},aks:{label:'Аксессуары',key:'aks',color:'#38ffb0'},rating:{label:'Рейтинг',key:'rating',color:'#8b5cf6'}};
+const metric=METRIC_MAP[metricKey];if(!metric){alert('Неизвестный тип: '+metricKey);return;}
+let brand='Все',shops=[];
+if(pageId==='t2'){brand='Т2';shops=APP.data.shops.filter(s=>s.brand==='Т2');}
+else if(pageId==='mmb'){brand='ММБ';shops=APP.data.shops.filter(s=>s.brand==='ММБ');}
+else if(pageId==='allshops'){shops=[...APP.data.shops];}
+else{alert('Неизвестная страница: '+pageId);return;}
+shops=shops.map(s=>({...s,metricPct:metricKey==='rating'?shopRatingPct(s):metricKey==='vmp'?Math.round((s.vmp||0)*100):(s[metric.key]?.plan>0?Math.round(s[metric.key].forecast/s[metric.key].plan*100):0)}));
+const isTop=type==='top';
+shops.sort((a,b)=>isTop?b.metricPct-a.metricPct:a.metricPct-b.metricPct);
+const top20=shops.slice(0,20);
+const W=1400,ROW_H=48;const H=120+40+ROW_H*(top20.length+1)+60;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle='#060c1a';ctx.fillRect(0,0,W,H);
+const title=(isTop?'ТОП 20':'АНТИТОП 20')+' · '+metric.label+(brand!=='Все'?' · '+brand:'');
+let y=RPT.drawHeader(ctx,W,title,'сортировка по % прогноза '+(isTop?'↓':'↑'));
+ctx.font='12px Arial';ctx.fillStyle='#5a7399';ctx.fillText('Магазины'+(brand!=='Все'?' бренда '+brand:'')+' · Прогноз / План / Факт',24,y+20);y+=36;
+const COLS=[{label:'#',w:50},{label:'Код',w:90},{label:'Магазин',w:340},{label:'Куратор',w:200},{label:'% прогноза',w:120},{label:'Прогноз',w:120},{label:'План',w:120},{label:'Факт',w:140},{label:'',w:100}];
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+top20.forEach((s,i)=>{const rankColors=['#ffc847','#c0c0c0','#cd7f32'];const rColor=i<3?rankColors[i]:'#c8ddf5';const pctColor=s.metricPct>=100?'#38ffb0':s.metricPct>=80?'#ffc847':'#ff4d6d';const m=s[metric.key]||{plan:0,fact:0,forecast:0};const cols=[{value:String(i+1),bold:true,color:rColor},{value:s.kod,align:'left',bold:true,color:'#eaf2ff'},{value:s.name.length>50?s.name.slice(0,50)+'...':s.name,align:'left',color:RPT.WHITE,bold:true},{value:s.curator.split(' ').slice(0,2).join(' '),bold:true,color:RPT.WHITE},{value:s.metricPct+'%',bold:true,color:pctColor},{value:RPT.fmt(m.forecast),bold:true,color:'#eaf2ff'},{value:RPT.fmt(m.plan),bold:true,color:RPT.WHITE},{value:RPT.fmt(m.fact),color:pctColor},{value:'',w:100}].map((col,ci)=>({...col,w:COLS[ci].w}));y=RPT.drawTableRow(ctx,W,y,cols,false,s.metricPct);RPT.drawBar(ctx,50+90+340+200,y-10,120+120+140+140,s.metricPct,10);});
+y+=14;ctx.font='11px Arial';ctx.fillStyle='#5a7399';ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,metric.label.replace(/ /g,'_')+'_'+(brand==='Все'?'all':brand.replace(/ /g,''))+'_'+(isTop?'top20':'bot20')+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
 </script>
 </body>
 </html>
