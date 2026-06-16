@@ -1235,7 +1235,11 @@ RPT.download(canvas,info.label+'_'+curatorName.split(' ')[0]+'_'+new Date().toLo
 }
 
 function genPersonReport(curatorName,section){
-const myShops=APP.data.shops.filter(s=>s.curator===curatorName||s.topk===curatorName||s.zam===curatorName);
+// Хатипов — отчеты только как куратор (9 магазинов), не как зам РОП (149 магазинов)
+const isKhatipov = curatorName.includes('Хатипов');
+const myShops = isKhatipov 
+    ? APP.data.shops.filter(s=>s.curator===curatorName)  // только кураторские
+    : APP.data.shops.filter(s=>s.curator===curatorName||s.topk===curatorName||s.zam===curatorName);
 if(!myShops.length){alert('Нет магазинов');return;}
 if(section==='all'){genPersonSection_full(curatorName,myShops);setTimeout(()=>genPersonSection_vmp(curatorName,myShops),300);setTimeout(()=>genPersonSection_shops(curatorName,myShops),600);return;}
 if(section==='full')genPersonSection_full(curatorName,myShops);
