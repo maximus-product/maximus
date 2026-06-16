@@ -1310,7 +1310,9 @@ RPT.download(canvas,'планы_'+curatorName.split(' ')[0]+'_'+new Date().toLoc
 }
 
 function genPersonSection_vmp(curatorName,myShops){
-const sorted=[...myShops].sort((a,b)=>b.vmp-a.vmp);
+// Фильтруем только магазины с ненулевым планом по метрикам ВМП
+const filteredShops=myShops.filter(s=>s.aks?.plan>0||s.settings?.plan>0||s.insurance?.plan>0);
+const sorted=[...filteredShops].sort((a,b)=>b.vmp-a.vmp);
 const W=1100,ROW_H=44;const H=96+40+ROW_H*(sorted.length+1)+50;
 const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
 ctx.fillStyle=RPT.BG;ctx.fillRect(0,0,W,H);
@@ -1324,7 +1326,9 @@ RPT.download(canvas,'ВМП_'+curatorName.split(' ')[0]+'_'+new Date().toLocaleD
 }
 
 function genPersonSection_shops(curatorName,myShops){
-const sorted=[...myShops].map(s=>({...s,rPct:shopRatingPct(s)})).sort((a,b)=>b.rPct-a.rPct);
+// Фильтруем только магазины с ненулевым планом по метрикам рейтинга
+const filteredShops=myShops.filter(s=>s.sto?.plan>0||s.aks?.plan>0||s.credit?.plan>0||s.services?.plan>0);
+const sorted=[...filteredShops].map(s=>({...s,rPct:shopRatingPct(s)})).sort((a,b)=>b.rPct-a.rPct);
 const W=1200,ROW_H=44;const H=96+40+ROW_H*(sorted.length+1)+50;
 const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
 ctx.fillStyle=RPT.BG;ctx.fillRect(0,0,W,H);
