@@ -1285,7 +1285,7 @@ tempCtx.font='bold 12px Arial';
 const maxKodWidth=Math.max(...rows.map(r=>tempCtx.measureText(r.kod).width))+20;
 tempCtx.font='11px Arial';
 const maxNameWidth=Math.max(...rows.map(r=>tempCtx.measureText(r.name).width))+20;
-const COLS=[{label:'#',w:40},{label:'Код',w:Math.max(80,maxKodWidth)},{label:'Магазин',w:Math.max(200,maxNameWidth)},{label:'Бренд',w:60},{label:'План',w:110},{label:'Факт',w:100},{label:'Прогноз',w:110},{label:'%пр',w:80},{label:'%факта',w:80}];
+const COLS=[{label:'#',w:40},{label:'Код',w:Math.max(80,maxKodWidth)},{label:'Магазин',w:Math.max(200,maxNameWidth)},{label:'План',w:110},{label:'Факт',w:100},{label:'Прогноз',w:110},{label:'%пр',w:80},{label:'%факта',w:80}];
 const W=COLS.reduce((sum,col)=>sum+col.w,0);
 const H=96+40+ROW_H*(rows.length+1)+50;
 const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
