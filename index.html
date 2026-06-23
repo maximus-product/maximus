@@ -1258,8 +1258,7 @@ function genReport(type,metric){try{if(type==='curators'){if(metric==='rating')g
 function genCuratorRatingReport(){
     alert('GEN CURATOR REPORT TEST');
 
-    const data=[...APP.data.ratings.curators]
-    ....sort((a,b)=>a.rank-b.rank);
+    const data=[...APP.data.ratings.curators].sort((a,b)=>a.rank-b.rank);
 const ROW_H=44;
 // Авто-расчет ширины столбца 'Куратор' на основе самого длинного имени
 const tempCanvas=document.createElement('canvas');const tempCtx=tempCanvas.getContext('2d');
