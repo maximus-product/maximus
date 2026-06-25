@@ -512,7 +512,15 @@ function openSidebar(){_id('sidebar').classList.add('open');_id('mob-overlay').c
 function closeSidebar(){_id('sidebar').classList.remove('open');_id('mob-overlay').classList.remove('show');document.body.style.overflow='';}
 function navTo(pageId){
 APP.previousPage=pageId;
+// Перерисовываем актуальную страницу вкладки (без потерянного состояния детального просмотра)
 if(pageId==='profiles'&&typeof renderProfiles==='function'){renderProfiles();}
+else if(pageId==='curators'&&typeof renderRatingPage==='function'){renderRatingPage('page-curators',APP.data.ratings.curators,'Рейтинг кураторов');}
+else if(pageId==='topk'&&typeof renderRatingPage==='function'){renderRatingPage('page-topk',APP.data.ratings.topk,'Рейтинг · Топ Команда');}
+else if(pageId==='zam'&&typeof renderRatingPage==='function'){renderRatingPage('page-zam',APP.data.ratings.zam,'Рейтинг замов РОП');}
+else if(pageId==='allshops'&&typeof renderAllShopsPage==='function'){renderAllShopsPage();}
+else if(pageId==='t2'&&typeof renderShopsPage==='function'){renderShopsPage('t2');}
+else if(pageId==='mmb'&&typeof renderShopsPage==='function'){renderShopsPage('mmb');}
+else if(pageId==='home'&&typeof renderHome==='function'){renderHome();}
 document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
 const dt=document.querySelector('.nav-tab[data-page="'+pageId+'"]');if(dt)dt.classList.add('active');
 document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active'));
