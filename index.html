@@ -997,7 +997,7 @@ function render(){const t=el.querySelector('table');if(t){t.querySelector('thead
 const reportMenus={
 curators:'<button class="report-btn" onclick="showReportMenu(\'curators\')">📄 Отчёты ▾</button><div id="report-menu-curators" class="report-menu" style="display:none"><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'settings\')">⚙️ Настройки</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'credit\')">💳 Кредит</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'vmp\')">📐 ВМП</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'aks_priority\')">⭐ Акс Приоритет</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'sto\')">📱 СТО</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'insurance\')">🛡 Страховки</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'shares\')">📊 По долям</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'revenue\')">💰 Выручка</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'aks\')">🛍 Аксессуары</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'services\')">📡 Услуги</div><div class="report-menu-item" onclick="genGroupReport(\'curators\',\'rating\')">🏆 Рейтинг кураторов</div></div>',
 topk:'<button class="report-btn" onclick="showReportMenu(\'topk\')">📄 Отчёты ▾</button><div id="report-menu-topk" class="report-menu" style="display:none"><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'settings\')">⚙️ Настройки</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'credit\')">💳 Кредит</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'vmp\')">📐 ВМП</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'aks_priority\')">⭐ Акс Приоритет</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'sto\')">📱 СТО</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'insurance\')">🛡 Страховки</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'shares\')">📊 По долям</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'revenue\')">💰 Выручка</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'aks\')">🛍 Аксессуары</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'services\')">📡 Услуги</div><div class="report-menu-item" onclick="genGroupReport(\'topk\',\'rating\')">🏆 Рейтинг Топ Команды</div></div>',
-zam:''
+zam:'<button class="report-btn" onclick="showReportMenu(\'zam\')">📄 Отчёты ▾</button><div id="report-menu-zam" class="report-menu" style="display:none"><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'settings\')">⚙️ Настройки</div><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'credit\')">💳 Кредит</div><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'vmp\')">📐 ВМП</div><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'aks_priority\')">⭐ Акс Приоритет</div><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'sto\')">📱 СТО</div><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'insurance\')">🛡 Страховки</div><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'shares\')">📊 По долям</div><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'revenue\')">💰 Выручка</div><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'aks\')">🛍 Аксессуары</div><div class="report-menu-item" onclick="genGroupReport(\'zam\',\'services\')">📡 Услуги</div></div>'
 };
 el.innerHTML='<div class="sec-hdr"><div class="sec-title">'+title+'</div><div class="sec-badge">'+filteredArr.length+' чел.</div><div class="sec-line"></div></div><div class="filter-row"><input class="search-input" placeholder="Поиск по имени..." oninput="__rFilter_'+pageId+'(this.value)">'+(reportMenus[pageId]||'')+'</div><div class="rtable-wrap"><table class="rtable">'+buildThead()+'<tbody>'+buildRows(sortedFiltered())+'</tbody></table></div>';
 window['__rSort_'+pageId]=function(key){if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=key==='rank'?1:-1;}render();};
@@ -1604,11 +1604,40 @@ if(!staffList||staffList.length===0){alert('Нет данных');return;}
 if(metricKey==='rating'){if(groupType==='curators')genCuratorRatingReport();else genTopkRatingReport(staffList,title);return;}
 if(metricKey==='shares'){genSharesGroupReport(groupType,title);return;}
 const keyMap={curators:'curator',topk:'topk',zam:'zam'};const staffKey=keyMap[groupType];
-const rows=staffList.map(person=>{const myShops=APP.data.shops.filter(s=>s[staffKey]===person.name);const plan=myShops.reduce((s,sh)=>s+(sh[metric.shopKey]?.plan||0),0);const fact=myShops.reduce((s,sh)=>s+(sh[metric.shopKey]?.fact||0),0);const fc=myShops.reduce((s,sh)=>s+(sh[metric.shopKey]?.forecast||0),0);const pct=plan>0?Math.round(fc/plan*100):0;return{name:person.name,rank:person.rank,plan,fact,forecast:fc,pct,shops:myShops.length};}).sort((a,b)=>b.pct-a.pct);
+const isVmp=metricKey==='vmp';
 const ROW_H=48;
-// Авто-расчет ширины столбца 'Сотрудник'
 const tempCanvas=document.createElement('canvas');const tempCtx=tempCanvas.getContext('2d');
 tempCtx.font='bold 15px Arial';
+if(isVmp){
+// ── ВМП: показываем коэффициент + входящие показатели (Аксы/Настройки/Страховки) ──
+const rows=staffList.map(person=>{
+const myShops=APP.data.shops.filter(s=>s[staffKey]===person.name);
+const vmpAvg=myShops.length?myShops.reduce((s,sh)=>s+(sh.vmp||0),0)/myShops.length:0;
+const pct=Math.round(vmpAvg*100);
+function subPct(k){const plan=myShops.reduce((s,sh)=>s+(sh[k]?.plan||0),0);const fc=myShops.reduce((s,sh)=>s+(sh[k]?.forecast||0),0);return plan>0?Math.round(fc/plan*100):0;}
+return{name:person.name,rank:person.rank,pct,vmpAvg,aksPct:subPct('aks'),setPct:subPct('settings'),insPct:subPct('insurance'),shops:myShops.length};
+}).sort((a,b)=>b.pct-a.pct);
+const maxNameWidth=Math.max(...rows.map(r=>tempCtx.measureText(r.name).width))+40;
+const COLS=[{label:'#',w:50},{label:'Сотрудник',w:Math.max(260,maxNameWidth)},{label:'ВМП %',w:90},{label:'Коэф',w:90},{label:'Аксы %',w:100},{label:'Настр %',w:100},{label:'Страх %',w:100},{label:'',w:30}];
+const W=COLS.reduce((sum,col)=>sum+col.w,0);
+const H=100+40+ROW_H*(rows.length+1)+50;
+const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
+ctx.fillStyle='#060c1a';ctx.fillRect(0,0,W,H);
+let y=RPT.drawHeader(ctx,W,'ВМП — '+title,'сортировка по % ВМП ↓');
+ctx.font='12px Arial';ctx.fillStyle='#5a7399';ctx.fillText('ВМП = среднее(Аксы% + Настройки% + Страховки%) · показатели по прогнозу',24,y+20);y+=36;
+RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
+const cFor=(p)=>p>=100?'#38ffb0':p>=80?'#ffc847':'#ff4d6d';
+rows.forEach((r,i)=>{const rankColors=['#ffc847','#c0c0c0','#cd7f32'];const rColor=i<3?rankColors[i]:'#c8ddf5';
+const cols=[{value:String(r.rank),bold:true,color:rColor},{value:r.name,align:'left',color:'#eaf2ff',bold:i<3},
+{value:r.pct+'%',bold:true,color:cFor(r.pct)},{value:r.vmpAvg.toFixed(3),color:RPT.WHITE},
+{value:r.aksPct+'%',bold:true,color:cFor(r.aksPct)},{value:r.setPct+'%',bold:true,color:cFor(r.setPct)},{value:r.insPct+'%',bold:true,color:cFor(r.insPct)},
+{value:'',w:30}].map((col,ci)=>({...col,w:COLS[ci].w}));
+y=RPT.drawTableRow(ctx,W,y,cols,false,r.pct);});
+y+=14;ctx.font='11px Arial';ctx.fillStyle='#5a7399';ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,y+16);
+RPT.download(canvas,'ВМП_'+groupType+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+return;
+}
+const rows=staffList.map(person=>{const myShops=APP.data.shops.filter(s=>s[staffKey]===person.name);const plan=myShops.reduce((s,sh)=>s+(sh[metric.shopKey]?.plan||0),0);const fact=myShops.reduce((s,sh)=>s+(sh[metric.shopKey]?.fact||0),0);const fc=myShops.reduce((s,sh)=>s+(sh[metric.shopKey]?.forecast||0),0);const pct=plan>0?Math.round(fc/plan*100):0;return{name:person.name,rank:person.rank,plan,fact,forecast:fc,pct,shops:myShops.length};}).sort((a,b)=>b.pct-a.pct);
 const maxNameWidth=Math.max(...rows.map(r=>tempCtx.measureText(r.name).width))+40;
 const COLS=[{label:'#',w:50},{label:'Сотрудник',w:Math.max(280,maxNameWidth)},{label:'Магазинов',w:90},{label:'План',w:110},{label:'Факт',w:110},{label:'Прогноз',w:120},{label:'% прогноза',w:110},{label:'',w:30}];
 const W=COLS.reduce((sum,col)=>sum+col.w,0);
@@ -1726,6 +1755,9 @@ let COLS;
 if(isRating){
 COLS=[{label:'#',w:46},{label:'Код',w:Math.max(80,maxKodWidth)},{label:'Магазин',w:Math.max(280,maxNameWidth)},{label:'Куратор',w:Math.max(170,maxCuratorWidth)},
 {label:'СТО %',w:90},{label:'Аксы %',w:90},{label:'Кредит %',w:90},{label:'Услуги %',w:90},{label:'Среднее %',w:110},{label:'',w:40}];
+}else if(metricKey==='vmp'){
+COLS=[{label:'#',w:46},{label:'Код',w:Math.max(80,maxKodWidth)},{label:'Магазин',w:Math.max(280,maxNameWidth)},{label:'Куратор',w:Math.max(170,maxCuratorWidth)},
+{label:'ВМП %',w:90},{label:'Коэф',w:90},{label:'Аксы %',w:90},{label:'Настр %',w:90},{label:'Страх %',w:90},{label:'',w:40}];
 }else{
 COLS=[{label:'#',w:50},{label:'Код',w:Math.max(90,maxKodWidth)},{label:'Магазин',w:Math.max(340,maxNameWidth)},{label:'Куратор',w:Math.max(200,maxCuratorWidth)},{label:'План',w:120},{label:'Факт',w:140},{label:'Прогноз',w:120},{label:'% прогноза',w:120},{label:'',w:100}];
 }
@@ -1751,6 +1783,16 @@ cols=[{value:String(i+1),bold:true,color:rColor},{value:s.kod,align:'left',bold:
 {value:stoP+'%',bold:true,color:cFor(stoP)},{value:aksP+'%',bold:true,color:cFor(aksP)},
 {value:credP+'%',bold:true,color:cFor(credP)},{value:servP+'%',bold:true,color:cFor(servP)},
 {value:s.metricPct+'%',bold:true,color:pctColor},{value:'',w:40}
+].map((col,ci)=>({...col,w:COLS[ci].w}));
+}else if(metricKey==='vmp'){
+const aksP=ratingSubPct(s,'aks'),setP=ratingSubPct(s,'settings'),insP=ratingSubPct(s,'insurance');
+const cFor=(p)=>p>=100?'#38ffb0':p>=80?'#ffc847':'#ff4d6d';
+cols=[{value:String(i+1),bold:true,color:rColor},{value:s.kod,align:'left',bold:true,color:'#eaf2ff'},
+{value:s.name.length>40?s.name.slice(0,40)+'...':s.name,align:'left',color:RPT.WHITE,bold:true},
+{value:s.curator.split(' ').slice(0,2).join(' '),bold:true,color:RPT.WHITE},
+{value:s.metricPct+'%',bold:true,color:pctColor},{value:(s.vmp||0).toFixed(3),color:RPT.WHITE},
+{value:aksP+'%',bold:true,color:cFor(aksP)},{value:setP+'%',bold:true,color:cFor(setP)},{value:insP+'%',bold:true,color:cFor(insP)},
+{value:'',w:40}
 ].map((col,ci)=>({...col,w:COLS[ci].w}));
 }else{
 const m=s[metric.key]||{plan:0,fact:0,forecast:0};
