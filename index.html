@@ -1509,18 +1509,46 @@ let bs=0,bq=0,bbs={};
 bR.slice(1).forEach(r=>{if(r[0]&&typeof r[3]==='number'&&r[3]>0){bs+=r[3];bq+=(r[2]||0);bbs[String(r[0])]={sum:Math.round(r[3]),qty:Math.round(r[2]||0)};}});
 const wsM=wb.Sheets['Прогноз продаж'];
 const mR=XLSX.utils.sheet_to_json(wsM,{header:1,defval:null});
-const VALID=['ММБ','Т2','МТС'];function normBrand(b){return b==='МТС'?'ММБ':b;}
+function normBrand(b){
+if(!b||typeof b!=='string')return null;
+const bl=b.toLowerCase();
+if(b==='Т2')return'Т2';
+if(b==='ММБ')return'ММБ';
+if(b==='МТС')return'ММБ';
+if(bl.includes('т2')||bl.includes('теле2'))return'Т2';
+if(b.includes('_'))return'ММБ';
+return null;
+}
+function isValidBrand(b){return normBrand(b)!==null;}
+
+// ── Автодетекция смещения колонок ──
+// В норм. файле строка0[6]='Выручка, руб.'. В старых архивных файлах (с доп. колонкой 'ТОП:')
+// все колонки начиная с Зам/Бренд смещены на +1. Ищем реальную позицию 'Выручка' в row0.
+let COL_SHIFT=0;
+const headerRow0=mR[0]||[];
+for(let i=4;i<12;i++){
+const v=headerRow0[i];
+if(typeof v==='string'&&v.toLowerCase().includes('выручка')){
+COL_SHIFT=i-6; // нормальная позиция = 6
+break;
+}
+}
+if(COL_SHIFT!==0)console.log('Обнаружено смещение колонок в файле:',COL_SHIFT,'— применяем автокоррекцию индексов');
+
+const BRAND_COL=5+COL_SHIFT;
 const shops=[];
 function cn(s){return typeof s==='string'?s.replace(/\n/g,' ').replace(/\xa0/g,' ').replace(/\s+/g,' ').trim():'';}
 function sp(f,p){return(p&&p!==0)?f/p:0;}
-function met(r,pc,fc,fcc){const p=r[pc]||0,f=r[fc]||0,fc2=r[fcc]||0;return{plan:Math.round(p),fact:Math.round(f),forecast:Math.round(fc2),pct:sp(f,p)};}
+function met(r,pc,fc,fcc){const p=r[pc+COL_SHIFT]||0,f=r[fc+COL_SHIFT]||0,fc2=r[fcc+COL_SHIFT]||0;return{plan:Math.round(p),fact:Math.round(f),forecast:Math.round(fc2),pct:sp(f,p)};}
 mR.slice(2).forEach(r=>{
-if(!r[0]||!r[1]||typeof r[1]!=='string'||!VALID.includes(r[5]))return;
-const vmp=typeof r[108]==='number'?r[108]:0;
-const aksPriorityPlan=typeof r[20]==='number'?r[20]:0;
-const aksPriorityFact=typeof r[21]==='number'?r[21]:0;
-const aksPriorityFc=typeof r[22]==='number'?r[22]:0;
-shops.push({kod:String(r[0]),name:r[1],brand:normBrand(r[5]),curator:cn(r[2]),topk:cn(r[3]),zam:cn(r[4]),
+if(!r[0]||!r[1]||typeof r[1]!=='string'||!isValidBrand(r[BRAND_COL]))return;
+const vmp=typeof r[108+COL_SHIFT]==='number'?r[108+COL_SHIFT]:0;
+const aksPriorityPlan=typeof r[20+COL_SHIFT]==='number'?r[20+COL_SHIFT]:0;
+const aksPriorityFact=typeof r[21+COL_SHIFT]==='number'?r[21+COL_SHIFT]:0;
+const aksPriorityFc=typeof r[22+COL_SHIFT]==='number'?r[22+COL_SHIFT]:0;
+// curator/topk/zam: при смещении (старый формат) есть доп. колонка 'ТОП:' между topk и zam — её пропускаем
+const zamCol=COL_SHIFT!==0?5:4;
+shops.push({kod:String(r[0]),name:r[1],brand:normBrand(r[BRAND_COL]),curator:cn(r[2]),topk:cn(r[3]),zam:cn(r[zamCol]),
 revenue:met(r,6,7,8),sto:met(r,13,14,15),aks:met(r,33,34,35),
 aks_priority:{plan:Math.round(aksPriorityPlan),fact:Math.round(aksPriorityFact),forecast:Math.round(aksPriorityFc),pct:sp(aksPriorityFc,aksPriorityPlan)},
 settings:met(r,41,42,43),insurance:met(r,49,50,51),credit:met(r,57,58,59),services:met(r,64,65,66),vmp:Math.round(vmp*10000)/10000});
