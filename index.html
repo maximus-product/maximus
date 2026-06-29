@@ -2234,6 +2234,24 @@ async function runSupabaseDiagnostics(){
     results.push({name:'staff_profiles',status:'error',detail:'Ошибка сети: '+e.message});
   }
 
+  // 3.5. Детальная проверка содержимого dashboard_history (по месяцам)
+  try{
+    const r=await fetch(SUPABASE_URL+'/rest/v1/dashboard_history?select=month_key,label,data&order=month_key.asc',{headers:SB_HEADERS});
+    if(r.ok){
+      const rows=await r.json();
+      const details=rows.map(row=>{
+        const shopsCount=row.data?.shops?.length||0;
+        const revSum=row.data?.shops?.reduce((s,sh)=>s+(sh.revenue?.fact||0),0)||0;
+        return row.label+': '+shopsCount+' магазинов, выручка факт='+RPT.fmt(revSum);
+      }).join('<br>');
+      results.push({name:'История по месяцам (детально)',status:rows.length?'ok':'warn',detail:rows.length?details:'Архив пуст'});
+    }else{
+      results.push({name:'История по месяцам (детально)',status:'error',detail:'HTTP '+r.status});
+    }
+  }catch(e){
+    results.push({name:'История по месяцам (детально)',status:'error',detail:'Ошибка: '+e.message});
+  }
+
   // 4. Тест записи (создаём тестовую запись и сразу удаляем)
   try{
     const testWrite=await fetch(SUPABASE_URL+'/rest/v1/dashboard_data',{
