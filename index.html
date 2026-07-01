@@ -533,13 +533,20 @@ try{const r=await fetch(SUPABASE_URL+'/rest/v1/dashboard_data',{method:'POST',he
 },
 async saveHistory(label,data,monthKey){
 try{
+const body=JSON.stringify({month_key:monthKey,label,data,uploaded_at:new Date().toISOString()});
 const r=await fetch(SUPABASE_URL+'/rest/v1/dashboard_history',{
 method:'POST',
 headers:{...SB_HEADERS,'Prefer':'resolution=merge-duplicates'},
-body:JSON.stringify({month_key:monthKey,label,data,uploaded_at:new Date().toISOString()})
+body
 });
-return r.ok;
-}catch(e){console.error('saveHistory error:',e);return false;}
+if(!r.ok){
+let errText='';
+try{const errJson=await r.json();errText=JSON.stringify(errJson);}catch(e){errText=await r.text().catch(()=>'');}
+console.error('saveHistory HTTP',r.status,errText);
+throw new Error('HTTP '+r.status+': '+errText);
+}
+return true;
+}catch(e){console.error('saveHistory error:',e);throw e;}
 },
 async loadHistory(){
 try{
@@ -1441,8 +1448,15 @@ const parsed=parseWorkbook(wb);
 const monthKey=capturedYear+'-'+String(capturedMonth).padStart(2,'0');
 const label=MONTH_NAMES[capturedMonth-1]+' '+capturedYear;
 setProgress(80,'Сохраняем в историю...');
-const histSaved=await DB.saveHistory(label,parsed,monthKey);
-if(!histSaved){showUErr('Не удалось сохранить в архив (Supabase). Проверьте соединение и попробуйте снова.');return;}
+let histSaved=false;
+try{
+await DB.saveHistory(label,parsed,monthKey);
+histSaved=true;
+}catch(saveErr){
+console.error('Save history failed:',saveErr);
+showUErr('Ошибка архива: '+saveErr.message);
+return;
+}
 if(APP._existingHistoryKeys&&!APP._existingHistoryKeys.includes(monthKey)){APP._existingHistoryKeys.push(monthKey);}
 APP._cachedHistoryData=null;
 setProgress(90,'Синхронизируем текущие данные...');
