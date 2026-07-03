@@ -1591,16 +1591,31 @@ settings:met(r,41,42,43),insurance:met(r,49,50,51),credit:met(r,57,58,59),servic
 const METRICS=['Товарка','Аксессуары','Кредит','Услуги','ВМП','АКС Приоритет'];
 function exBlock(si,ei){
 const res=[];
+const WEIGHTS=[3,2,1.5,1,2,1.5]; // Товарка,Аксы,Кредит,Услуги,ВМП,АКС Приоритет
 for(let i=si+1;i<ei;i++){
 const r=mR[i];const name=cn(String(r[5]||''));
 if(!name)continue;
-const itog=r[18],rank=r[19];
-if(typeof itog!=='number')continue;
 const coeffs=[0,1,2,3,4,5].map(j=>typeof r[6+j]==='number'?Math.round(r[6+j]*10000)/10000:0);
-const places=[0,1,2,3,4,5].map(j=>typeof r[12+j]==='number'?Math.round(r[12+j]):0);
-res.push({name,coeffs,places,itog:Math.round(itog*10)/10,rank:Math.round(rank)||0,metrics:METRICS});
+// Если у сотрудника все коэффициенты нулевые (пустая строка) — пропускаем
+if(coeffs.every(c=>c===0))continue;
+let itog=r[18];
+// Д34-фикс: если ИТОГ пришёл как ошибка Excel (#DIV/0! и т.п.) — считаем сами по формуле
+if(typeof itog!=='number'){
+itog=coeffs.reduce((sum,c,idx)=>sum+c*WEIGHTS[idx],0);
 }
-res.sort((a,b)=>a.rank-b.rank);return res;
+const places=[0,1,2,3,4,5].map(j=>typeof r[12+j]==='number'?Math.round(r[12+j]):0);
+const rankRaw=r[19];
+const rank=typeof rankRaw==='number'?Math.round(rankRaw):0; // 0 = пересчитаем ниже
+res.push({name,coeffs,places,itog:Math.round(itog*10)/10,rank,metrics:METRICS});
+}
+// Если у кого-то rank=0 (не было числового значения) — пересчитываем места по итогу (меньше=лучше)
+if(res.some(p=>p.rank===0)){
+res.sort((a,b)=>a.itog-b.itog);
+res.forEach((p,idx)=>{p.rank=idx+1;});
+}else{
+res.sort((a,b)=>a.rank-b.rank);
+}
+return res;
 }
 let tI=-1,cI=-1,zI=-1,wI=-1;
 mR.forEach((r,i)=>{
