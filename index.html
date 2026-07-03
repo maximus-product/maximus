@@ -1204,9 +1204,20 @@ const inArr=new Set(filteredArr.map(p=>p.name));
 const staffKeyMap={curators:APP.data.staff.curators,topk:APP.data.staff.topk,zam:APP.data.staff.zam};
 const allStaffNames=staffKeyMap[pageId]||[];
 const METRICS_DEFAULT=['Товарка','Аксессуары','Кредит','Услуги','ВМП','АКС Приоритет'];
+const WEIGHTS_FALLBACK=[3,2,1.5,1,2,1.5];
 allStaffNames.filter(n=>!inArr.has(n)&&APP.data.shops.some(s=>s[k]===n)).forEach(n=>{
-filteredArr.push({name:n,coeffs:[0,0,0,0,0,0],places:[0,0,0,0,0,0],itog:9999,rank:0,metrics:METRICS_DEFAULT});
+// Д38-фикс: считаем реальные коэффициенты из магазинов (не заглушку 0%/9999)
+const myShops=APP.data.shops.filter(s=>s[k]===n);
+const coeffs=calcCoeffsFromShopsList(myShops);
+const itog=Math.round(coeffs.reduce((sum,c,idx)=>sum+c*WEIGHTS_FALLBACK[idx],0)*10)/10;
+filteredArr.push({name:n,coeffs,places:[0,0,0,0,0,0],itog,rank:0,metrics:METRICS_DEFAULT});
 });
+// Пересчитываем места по каждому показателю с учётом новых сотрудников
+for(let m=0;m<6;m++){
+const sorted=[...filteredArr].sort((a,b)=>(b.coeffs[m]||0)-(a.coeffs[m]||0));
+sorted.forEach((p,idx)=>{if(!p.places||p.places.every(x=>x===0)){if(!p._np)p._np=[0,0,0,0,0,0];p._np[m]=idx+1;}});
+}
+filteredArr.forEach(p=>{if(p._np){p.places=p._np;delete p._np;}});
 // Пересчитываем итоговое место после объединения (по итогу, меньше=лучше)
 filteredArr.sort((a,b)=>a.itog-b.itog);
 filteredArr=filteredArr.map((p,idx)=>({...p,rank:idx+1}));
@@ -1627,13 +1638,24 @@ for(let i=si+1;i<ei;i++){
 const r=mR[i];const name=cn(String(r[5]||''));
 if(!name||seenNames.has(name))continue;
 seenNames.add(name);
-res.push({name});
+// Д38-фикс: сначала пробуем взять коэффициенты НАПРЯМУЮ из Excel (точное совпадение с файлом)
+const excelCoeffs=[0,1,2,3,4,5].map(j=>typeof r[6+j]==='number'?Math.round(r[6+j]*10000)/10000:null);
+res.push({name,excelCoeffs,excelItog:typeof r[18]==='number'?r[18]:null});
 }
-// Считаем коэффициенты каждому из его реальных магазинов
 res.forEach(p=>{
+// Если ВСЕ коэффициенты из Excel валидны (не null от #DIV/0!) — используем их как есть
+const allValid=p.excelCoeffs.every(c=>c!==null);
+if(allValid){
+p.coeffs=p.excelCoeffs;
+}else{
+// Резервный расчёт из данных магазинов — только если Excel реально сломан у этого человека
 const myShops=shops.filter(s=>s[staffKey]===p.name);
 p.coeffs=calcCoeffsFromShopsList(myShops);
-p.itog=Math.round(p.coeffs.reduce((sum,c,idx)=>sum+c*WEIGHTS[idx],0)*10)/10;
+}
+delete p.excelCoeffs;
+// ИТОГ — если Excel дал валидное число, используем его (точное совпадение), иначе считаем сами
+p.itog=p.excelItog!==null?Math.round(p.excelItog*10)/10:Math.round(p.coeffs.reduce((sum,c,idx)=>sum+c*WEIGHTS[idx],0)*10)/10;
+delete p.excelItog;
 p.metrics=METRICS;
 });
 // Места по каждому показателю — ранжирование внутри блока (больше=лучше место 1)
