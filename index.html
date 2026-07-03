@@ -1601,31 +1601,50 @@ aks_priority:{plan:Math.round(aksPriorityPlan),fact:Math.round(aksPriorityFact),
 settings:met(r,41,42,43),insurance:met(r,49,50,51),credit:met(r,57,58,59),services:met(r,64,65,66),vmp:Math.round(vmp*10000)/10000});
 });
 const METRICS=['Товарка','Аксессуары','Кредит','Услуги','ВМП','АКС Приоритет'];
-function exBlock(si,ei){
+// Д37v2: считаем коэффициенты из суммы данных закреплённых магазинов сотрудника
+// (среднее forecast/plan по каждому направлению), а НЕ из блока рейтинга Excel —
+// это работает одинаково для всех, независимо от того, сломаны ли Excel-формулы
+function calcCoeffsFromShopsList(myShops){
+function avgRatio(getPlan,getForecast){
+const plan=myShops.reduce((s,sh)=>s+(getPlan(sh)||0),0);
+const fc=myShops.reduce((s,sh)=>s+(getForecast(sh)||0),0);
+return plan>0?Math.round(fc/plan*10000)/10000:0;
+}
+const tovarka=avgRatio(sh=>sh.revenue?.plan,sh=>sh.revenue?.forecast);
+const aksy=avgRatio(sh=>sh.aks?.plan,sh=>sh.aks?.forecast);
+const kredit=avgRatio(sh=>sh.credit?.plan,sh=>sh.credit?.forecast);
+const uslugi=avgRatio(sh=>sh.services?.plan,sh=>sh.services?.forecast);
+const vmpAvg=myShops.length?myShops.reduce((s,sh)=>s+(sh.vmp||0),0)/myShops.length:0;
+const aksPriority=avgRatio(sh=>sh.aks_priority?.plan,sh=>sh.aks_priority?.forecast);
+return[tovarka,aksy,kredit,uslugi,Math.round(vmpAvg*10000)/10000,aksPriority];
+}
+
+function exBlock(si,ei,staffKey){
 const res=[];
 const WEIGHTS=[3,2,1.5,1,2,1.5]; // Товарка,Аксы,Кредит,Услуги,ВМП,АКС Приоритет
+const seenNames=new Set();
 for(let i=si+1;i<ei;i++){
 const r=mR[i];const name=cn(String(r[5]||''));
-if(!name)continue;
-// Пропускаем только полностью пустые строки (нет имени вообще — уже проверено выше)
-const coeffs=[0,1,2,3,4,5].map(j=>typeof r[6+j]==='number'?Math.round(r[6+j]*10000)/10000:0);
-// Д36-фикс: считаем ИТОГ всегда сами (не доверяем Excel-формуле вообще — она может быть битой у части сотрудников)
-const itog=coeffs.reduce((sum,c,idx)=>sum+c*WEIGHTS[idx],0);
-// Д36-фикс: места по каждому показателю НЕ читаем из Excel (там #DIV/0! ломает всё) —
-// считаем их сами через ранжирование внутри блока чуть ниже, пока ставим null
-res.push({name,coeffs,itog:Math.round(itog*10)/10,rank:0,metrics:METRICS,_places:null});
+if(!name||seenNames.has(name))continue;
+seenNames.add(name);
+res.push({name});
 }
-// Д36-фикс: считаем места (place) по каждому показателю самостоятельно —
-// ранжируем всех сотрудников блока по каждому коэффициенту (больше=лучше место 1)
+// Считаем коэффициенты каждому из его реальных магазинов
+res.forEach(p=>{
+const myShops=shops.filter(s=>s[staffKey]===p.name);
+p.coeffs=calcCoeffsFromShopsList(myShops);
+p.itog=Math.round(p.coeffs.reduce((sum,c,idx)=>sum+c*WEIGHTS[idx],0)*10)/10;
+p.metrics=METRICS;
+});
+// Места по каждому показателю — ранжирование внутри блока (больше=лучше место 1)
 for(let m=0;m<6;m++){
 const sorted=[...res].sort((a,b)=>b.coeffs[m]-a.coeffs[m]);
 sorted.forEach((p,idx)=>{
-if(!p._places)p._places=[0,0,0,0,0,0];
-p._places[m]=idx+1;
+if(!p.places)p.places=[0,0,0,0,0,0];
+p.places[m]=idx+1;
 });
 }
-res.forEach(p=>{p.places=p._places;delete p._places;});
-// Итоговое место — по итогу (меньше=лучше), это и есть общий рейтинг
+// Итоговое место — по итогу (меньше=лучше)
 res.sort((a,b)=>a.itog-b.itog);
 res.forEach((p,idx)=>{p.rank=idx+1;});
 return res;
@@ -1635,7 +1654,7 @@ mR.forEach((r,i)=>{
 if(r[18]==='ИТОГ'&&r[19]==='Рейтинг: '){const m=cn(String(r[5]||''));if(m==='ТОП команда')tI=i;else if(m==='Куратор:')cI=i;else if(m==='Зам')zI=i;}
 if(r[5]==='Вес:')wI=i;
 });
-const ratings={topk:tI>=0?exBlock(tI,wI>=0?wI:tI+25):[],curators:cI>=0?exBlock(cI,zI>=0?zI:cI+30):[],zam:zI>=0?exBlock(zI,zI+5):[]};
+const ratings={topk:tI>=0?exBlock(tI,wI>=0?wI:tI+25,'topk'):[],curators:cI>=0?exBlock(cI,zI>=0?zI:cI+30,'curator'):[],zam:zI>=0?exBlock(zI,zI+5,'zam'):[]};
 function uq(arr){const s=new Set(),o=[];arr.forEach(x=>{if(x&&!s.has(x)){s.add(x);o.push(x);}});return o;}
 const staff={curators:uq(shops.map(s=>s.curator)),topk:uq(shops.map(s=>s.topk)),zam:uq(shops.map(s=>s.zam))};
 ratings.topk=ratings.topk.filter(p=>staff.topk.includes(p.name));
