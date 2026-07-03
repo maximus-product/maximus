@@ -516,6 +516,24 @@ ondrop="handleDropFinal(event)">
 </div>
 <script>
 const SUPABASE_URL='https://cwsyikrqgsppwlskjsqz.supabase.co';
+// Д37v2: считаем коэффициенты из суммы данных закреплённых магазинов сотрудника
+// (среднее forecast/plan по каждому направлению), а НЕ из блока рейтинга Excel —
+// это работает одинаково для всех, независимо от того, сломаны ли Excel-формулы
+function calcCoeffsFromShopsList(myShops){
+function avgRatio(getPlan,getForecast){
+const plan=myShops.reduce((s,sh)=>s+(getPlan(sh)||0),0);
+const fc=myShops.reduce((s,sh)=>s+(getForecast(sh)||0),0);
+return plan>0?Math.round(fc/plan*10000)/10000:0;
+}
+const tovarka=avgRatio(sh=>sh.revenue?.plan,sh=>sh.revenue?.forecast);
+const aksy=avgRatio(sh=>sh.aks?.plan,sh=>sh.aks?.forecast);
+const kredit=avgRatio(sh=>sh.credit?.plan,sh=>sh.credit?.forecast);
+const uslugi=avgRatio(sh=>sh.services?.plan,sh=>sh.services?.forecast);
+const vmpAvg=myShops.length?myShops.reduce((s,sh)=>s+(sh.vmp||0),0)/myShops.length:0;
+const aksPriority=avgRatio(sh=>sh.aks_priority?.plan,sh=>sh.aks_priority?.forecast);
+return[tovarka,aksy,kredit,uslugi,Math.round(vmpAvg*10000)/10000,aksPriority];
+}
+
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3c3lpa3JxZ3NwcHdsc2tqc3F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NDIyNDIsImV4cCI6MjA5NjUxODI0Mn0.UH6tPMjCKomwzDwVKd2o_RTHVAXoNmD6PEhk8Ufq_0I';
 const SB_HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'};
 const EMPTY_DATA={network:{},bештау:{total_sum:0,total_qty:0,by_shop:{}},shops:[],staff:{curators:[],topk:[],zam:[]},ratings:{topk:[],curators:[],zam:[]}};
@@ -1612,23 +1630,6 @@ aks_priority:{plan:Math.round(aksPriorityPlan),fact:Math.round(aksPriorityFact),
 settings:met(r,41,42,43),insurance:met(r,49,50,51),credit:met(r,57,58,59),services:met(r,64,65,66),vmp:Math.round(vmp*10000)/10000});
 });
 const METRICS=['Товарка','Аксессуары','Кредит','Услуги','ВМП','АКС Приоритет'];
-// Д37v2: считаем коэффициенты из суммы данных закреплённых магазинов сотрудника
-// (среднее forecast/plan по каждому направлению), а НЕ из блока рейтинга Excel —
-// это работает одинаково для всех, независимо от того, сломаны ли Excel-формулы
-function calcCoeffsFromShopsList(myShops){
-function avgRatio(getPlan,getForecast){
-const plan=myShops.reduce((s,sh)=>s+(getPlan(sh)||0),0);
-const fc=myShops.reduce((s,sh)=>s+(getForecast(sh)||0),0);
-return plan>0?Math.round(fc/plan*10000)/10000:0;
-}
-const tovarka=avgRatio(sh=>sh.revenue?.plan,sh=>sh.revenue?.forecast);
-const aksy=avgRatio(sh=>sh.aks?.plan,sh=>sh.aks?.forecast);
-const kredit=avgRatio(sh=>sh.credit?.plan,sh=>sh.credit?.forecast);
-const uslugi=avgRatio(sh=>sh.services?.plan,sh=>sh.services?.forecast);
-const vmpAvg=myShops.length?myShops.reduce((s,sh)=>s+(sh.vmp||0),0)/myShops.length:0;
-const aksPriority=avgRatio(sh=>sh.aks_priority?.plan,sh=>sh.aks_priority?.forecast);
-return[tovarka,aksy,kredit,uslugi,Math.round(vmpAvg*10000)/10000,aksPriority];
-}
 
 function exBlock(si,ei,staffKey){
 const res=[];
