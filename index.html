@@ -516,6 +516,44 @@ ondrop="handleDropFinal(event)">
 </div>
 <script>
 const SUPABASE_URL='https://cwsyikrqgsppwlskjsqz.supabase.co';
+// ═══════════════════════════════════════════════
+// ЕДИНЫЙ ИСТОЧНИК СПИСКА СОТРУДНИКОВ (Д41-фикс)
+// Используется и в таблице рейтинга, и во всех отчётах — чтобы списки совпадали
+// ═══════════════════════════════════════════════
+function getFinalStaffList(pageId){
+const D=APP.data;
+const keyMap={curators:'curator',topk:'topk',zam:'zam'};
+const k=keyMap[pageId];
+const arr=D.ratings[pageId]||[];
+const WEIGHTS=[3,2,1.5,1,2,1.5];
+// Только те у кого реально есть магазины сейчас
+let filteredArr=arr.filter(p=>D.shops.some(s=>s[k]===p.name));
+// Добавляем сотрудников которые есть в магазинах, но не попали в блок рейтинга Excel
+const inArr=new Set(filteredArr.map(p=>p.name));
+const allStaffNames=D.staff[pageId]||[];
+const METRICS_DEFAULT=['Товарка','Аксессуары','Кредит','Услуги','ВМП','АКС Приоритет'];
+allStaffNames.filter(n=>!inArr.has(n)&&D.shops.some(s=>s[k]===n)).forEach(n=>{
+const myShops=D.shops.filter(s=>s[k]===n);
+const coeffs=calcCoeffsFromShopsList(myShops);
+filteredArr.push({name:n,coeffs,places:[0,0,0,0,0,0],itog:0,rank:0,metrics:METRICS_DEFAULT});
+});
+// Пересчитываем места по каждому показателю для всех (единая честная система)
+for(let m=0;m<6;m++){
+const sorted=[...filteredArr].sort((a,b)=>(b.coeffs[m]||0)-(a.coeffs[m]||0));
+sorted.forEach((p,idx)=>{
+if(!p.places)p.places=[0,0,0,0,0,0];
+p.places[m]=idx+1;
+});
+}
+// ИТОГ = сумма(место × вес)
+filteredArr.forEach(p=>{
+p.itog=Math.round(p.places.reduce((sum,place,idx)=>sum+place*WEIGHTS[idx],0)*10)/10;
+});
+filteredArr.sort((a,b)=>a.itog-b.itog);
+filteredArr=filteredArr.map((p,idx)=>({...p,rank:idx+1}));
+return filteredArr;
+}
+
 // Д37v2: считаем коэффициенты из суммы данных закреплённых магазинов сотрудника
 // (среднее forecast/plan по каждому направлению), а НЕ из блока рейтинга Excel —
 // это работает одинаково для всех, независимо от того, сломаны ли Excel-формулы
@@ -1215,34 +1253,7 @@ function renderRatingPage(pageElId,arr,title){
 const el=_id(pageElId);const pageId=pageElId.replace('page-','');
 const keyMap={curators:'curator',topk:'topk',zam:'zam'};
 const k=keyMap[pageId];
-let filteredArr=arr.filter(p=>APP.data.shops.some(s=>s[k]===p.name));
-// Д36-фикс: добавляем сотрудников которые есть в магазинах, но ещё не попали в блок рейтинга Excel
-// (например новый сотрудник без единой строки коэффициентов — Есоян и т.п.)
-const inArr=new Set(filteredArr.map(p=>p.name));
-const staffKeyMap={curators:APP.data.staff.curators,topk:APP.data.staff.topk,zam:APP.data.staff.zam};
-const allStaffNames=staffKeyMap[pageId]||[];
-const METRICS_DEFAULT=['Товарка','Аксессуары','Кредит','Услуги','ВМП','АКС Приоритет'];
-const WEIGHTS_FALLBACK=[3,2,1.5,1,2,1.5];
-allStaffNames.filter(n=>!inArr.has(n)&&APP.data.shops.some(s=>s[k]===n)).forEach(n=>{
-const myShops=APP.data.shops.filter(s=>s[k]===n);
-const coeffs=calcCoeffsFromShopsList(myShops);
-filteredArr.push({name:n,coeffs,places:[0,0,0,0,0,0],itog:0,rank:0,metrics:METRICS_DEFAULT});
-});
-// Д40-фикс: пересчитываем МЕСТА по каждому показателю для ВСЕХ (включая только что добавленных) —
-// единая честная система ранжирования
-for(let m=0;m<6;m++){
-const sorted=[...filteredArr].sort((a,b)=>(b.coeffs[m]||0)-(a.coeffs[m]||0));
-sorted.forEach((p,idx)=>{
-if(!p.places)p.places=[0,0,0,0,0,0];
-p.places[m]=idx+1;
-});
-}
-// Д40-фикс: ИТОГ = сумма(место × вес) для всех — единая формула
-filteredArr.forEach(p=>{
-p.itog=Math.round(p.places.reduce((sum,place,idx)=>sum+place*WEIGHTS_FALLBACK[idx],0)*10)/10;
-});
-filteredArr.sort((a,b)=>a.itog-b.itog);
-filteredArr=filteredArr.map((p,idx)=>({...p,rank:idx+1}));
+let filteredArr=getFinalStaffList(pageId);
 if(!filteredArr?.length){el.innerHTML='<div class="empty-state">Нет данных</div>';return;}
 const METRICS=filteredArr[0]?.metrics||['Товарка','Аксессуары','Кредит','Услуги','ВМП','АКС Приоритет'];
 const isRatingPage=pageId==='curators'||pageId==='topk'||pageId==='zam';
@@ -2079,9 +2090,9 @@ function genGroupReport(groupType,metricKey){
 const METRIC_MAP={settings:{label:'Настройки',shopKey:'settings',color:'#38ffb0'},credit:{label:'Кредит',shopKey:'credit',color:'#2d8cff'},vmp:{label:'ВМП',shopKey:'vmp',color:'#ffc847'},aks_priority:{label:'Акс Приоритет',shopKey:'aks',color:'#ff6b6b'},sto:{label:'СТО',shopKey:'sto',color:'#00d4ff'},insurance:{label:'Страховки',shopKey:'insurance',color:'#a78bfa'},shares:{label:'По долям',shopKey:'revenue',color:'#2dd4bf'},revenue:{label:'Выручка',shopKey:'revenue',color:'#2d8cff'},aks:{label:'Аксессуары',shopKey:'aks',color:'#38ffb0'},services:{label:'Услуги',shopKey:'services',color:'#f59e0b'},rating:{label:'Рейтинг',shopKey:'rating',color:'#8b5cf6'}};
 const metric=METRIC_MAP[metricKey];if(!metric){alert('Неизвестный тип: '+metricKey);return;}
 let staffList,pageId,title;
-if(groupType==='curators'){staffList=APP.data.ratings.curators;pageId='curators';title='Рейтинг кураторов';}
-else if(groupType==='topk'){staffList=APP.data.ratings.topk;pageId='topk';title='Топ Команда';}
-else if(groupType==='zam'){staffList=APP.data.ratings.zam;pageId='zam';title='Замы РОП';}
+if(groupType==='curators'){staffList=getFinalStaffList('curators');pageId='curators';title='Рейтинг кураторов';}
+else if(groupType==='topk'){staffList=getFinalStaffList('topk');pageId='topk';title='Топ Команда';}
+else if(groupType==='zam'){staffList=getFinalStaffList('zam');pageId='zam';title='Замы РОП';}
 else{alert('Неизвестная группа: '+groupType);return;}
 if(!staffList||staffList.length===0){alert('Нет данных');return;}
 if(metricKey==='rating'){if(groupType==='curators')genCuratorRatingReport();else genTopkRatingReport(staffList,title);return;}
@@ -2138,7 +2149,7 @@ RPT.download(canvas,metric.label.replace(/ /g,'_')+'_'+groupType+'_'+new Date().
 function genSharesGroupReport(groupType,title){
 const keyMap={curators:'curator',topk:'topk',zam:'zam'};
 const staffKey=keyMap[groupType];
-const staffList=APP.data.ratings[groupType];
+const staffList=getFinalStaffList(groupType);
 const rows=staffList.map(person=>{
 const myShops=APP.data.shops.filter(s=>s[staffKey]===person.name);
 const totalRev=myShops.reduce((s,sh)=>s+(sh.revenue?.forecast||0),0);
