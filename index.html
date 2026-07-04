@@ -1149,7 +1149,7 @@ const safeName=name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30);
 const roleLabels={curators:'Куратор',topk:'Топ Команда',zam:'Зам РОП'};
 const roleLabel=roleLabels[pageId]||'Сотрудник';
 const pr=APP.profiles[name]||{};
-const reportBtn=pageId==='curators'?'<div style="position:relative;display:inline-block"><button class="report-btn" onclick="togglePersonMenu(\''+safeName+'\')">📄 Отчёты ▾</button><div id="pmenu_'+safeName+'" style="display:none;position:absolute;top:110%;left:0;z-index:100;background:#0b1428;border:1px solid rgba(100,160,255,0.25);border-radius:12px;padding:8px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:4px 10px 8px;font-weight:700">Выберите отчёт</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'revenue\')">📊 Товарная выручка — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'sto\')">📱 СТО — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks\')">🛍 Аксессуары — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks_priority\')">⭐ Акс Приоритет — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'settings\')">⚙️ Настройки — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'insurance\')">🛡 Страховки — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'services\')">📡 Услуги — магазины</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'full\')">📋 Общее выполнение планов</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'vmp\')">📐 ВМП с разбивкой</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'shops\')">🏪 Рейтинг магазинов</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'all\')" style="color:#00d4ff;border-color:rgba(0,212,255,0.3)">⬇ Все отчёты сразу</div></div></div>':'';
+const reportBtn=pageId==='curators'?'<div style="position:relative;display:inline-block"><button class="report-btn" onclick="togglePersonMenu(\''+safeName+'\')">📄 Отчёты ▾</button><div id="pmenu_'+safeName+'" style="display:none;position:absolute;top:110%;left:0;z-index:100;background:#0b1428;border:1px solid rgba(100,160,255,0.25);border-radius:12px;padding:8px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:4px 10px 8px;font-weight:700">Выберите отчёт</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'revenue\')">📊 Товарная выручка — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'sto\')">📱 СТО — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks\')">🛍 Аксессуары — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'credit\')">💳 Кредит — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks_priority\')">⭐ Акс Приоритет — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'settings\')">⚙️ Настройки — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'insurance\')">🛡 Страховки — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'services\')">📡 Услуги — магазины</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'full\')">📋 Общее выполнение планов</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'vmp\')">📐 ВМП с разбивкой</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'shops\')">🏪 Рейтинг магазинов</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'all\')" style="color:#00d4ff;border-color:rgba(0,212,255,0.3)">⬇ Все отчёты сразу</div></div></div>':'';
 const content='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap"><div class="detail-back" style="margin-bottom:0" onclick="renderProfiles();navTo(\'profiles\')">← Назад к профилям</div>'+reportBtn+'</div><div class="detail-header">'+avatarHtml(name,72)+'<div class="detail-info"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="detail-name">'+name+'</div><button class="row-btn" onclick="event.stopPropagation();openPM(\''+name.replace(/'/g,"\\'")+'\')" style="font-size:11px;padding:6px 14px">✎ Редактировать профиль</button></div><div class="detail-role">'+roleLabel+(person?' · Рейтинг #'+person.rank:'')+'</div><div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">'+(pr.phone?'<span style="font-size:12px;color:var(--muted)">📞 '+pr.phone+'</span>':'')+(pr.tg?'<span style="font-size:12px;color:var(--muted)">✈ '+pr.tg+'</span>':'')+(pr.birthday?'<span style="font-size:12px;color:var(--gold)">🎂 '+formatBirthday(pr.birthday)+'</span>':'')+'<span style="font-size:12px;color:var(--muted)">'+myShops.length+' магазинов</span></div></div></div><div class="sec-hdr" style="margin-top:0"><div class="sec-title">Сводка по показателям</div><div class="sec-badge">'+myShops.length+' магазинов</div><div class="sec-line"></div></div>'+kpisH+bestShopsH+'<div class="sec-hdr"><div class="sec-title">Магазины</div><div class="sec-badge">'+myShops.length+' точек</div><div class="sec-line"></div></div>'+shopTableHtml(myShops,'kod',1,pageId+'_detail');
 let _detailSortKey='kod',_detailSortDir=1;
 window['__shopColSort_'+pageId+'_detail']=function(key){
@@ -1861,11 +1861,12 @@ const tempCanvas=document.createElement('canvas');const tempCtx=tempCanvas.getCo
 tempCtx.font='bold 12px Arial';
 const maxKodWidth=Math.max(...myShops.map(s=>tempCtx.measureText(s.kod).width))+20;
 tempCtx.font='11px Arial';
-const maxNameWidth=Math.max(...myShops.map(s=>tempCtx.measureText(s.name).width))+20;
+// Д42-фикс: учитываем реальную обрезку названия (slice 0,26) при расчёте ширины — не берём полную длину
+const maxNameWidth=Math.max(...myShops.map(s=>tempCtx.measureText(s.name.slice(0,26)).width))+20;
 const COLS=[
  {label:'#',w:40},
  {label:'Код',w:Math.max(70,maxKodWidth)},
- {label:'Магазин',w:Math.max(200,maxNameWidth)}
+ {label:'Магазин',w:Math.max(150,maxNameWidth)}
 ];
 
 SHOW.forEach(m=>{
@@ -2162,21 +2163,28 @@ const aksShare=totalRev>0?(totalAks/totalRev*100):0;
 const insShare=totalSto>0?(totalIns/totalSto*100):0;
 const setShare=totalSto>0?(totalSet/totalSto*100):0;
 const credShare=totalRev>0?(totalCred/totalRev*100):0;
-return{name:person.name,rank:person.rank,aksShare,insShare,setShare,credShare,shops:myShops.length};
-}).sort((a,b)=>b.rank-a.rank);
-const W=1100,ROW_H=48;const H=100+40+ROW_H*(rows.length+1)+50;
+// Д42-фикс: система баллов — 1 балл за каждый показатель в норме (макс 4)
+let score=0;
+if(aksShare>=28)score++;
+if(insShare>=4)score++;
+if(setShare>=4)score++;
+if(credShare>=25)score++;
+return{name:person.name,score,aksShare,insShare,setShare,credShare,shops:myShops.length};
+}).sort((a,b)=>b.score-a.score);
+const W=1150,ROW_H=48;const H=100+40+ROW_H*(rows.length+1)+50;
 const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
 ctx.fillStyle='#060c1a';ctx.fillRect(0,0,W,H);
 let y=RPT.drawHeader(ctx,W,'Доли показателей — '+title,'плановые доли: Аксы 28% · Страховки 4% · Настройки 4% · Кредит 25%');
-ctx.font='12px Arial';ctx.fillStyle='#5a7399';ctx.fillText('Доли показателей от выручки/СТО по каждому сотруднику',24,y+20);y+=36;
+ctx.font='12px Arial';ctx.fillStyle='#5a7399';ctx.fillText('1 балл за каждый показатель в норме (макс 4) · сортировка по баллам ↓',24,y+20);y+=36;
 const COLS=[
 {label:'#',w:50},
-{label:'Сотрудник',w:280},
+{label:'Сотрудник',w:250},
 {label:'Магазинов',w:90},
 {label:'Аксы % (план 28%)',w:130},
 {label:'Страховки % (план 4%)',w:140},
 {label:'Настройки % (план 4%)',w:140},
-{label:'Кредит % (план 25%)',w:130}
+{label:'Кредит % (план 25%)',w:130},
+{label:'Баллы',w:100}
 ];
 RPT.drawTableRow(ctx,W,y,COLS,true);y+=ROW_H;
 rows.forEach((r,i)=>{
@@ -2186,14 +2194,16 @@ const aksColor=r.aksShare>=28?'#38ffb0':r.aksShare>=22.4?'#ffc847':'#ff4d6d';
 const insColor=r.insShare>=4?'#38ffb0':r.insShare>=3.2?'#ffc847':'#ff4d6d';
 const setColor=r.setShare>=4?'#38ffb0':r.setShare>=3.2?'#ffc847':'#ff4d6d';
 const credColor=r.credShare>=25?'#38ffb0':r.credShare>=20?'#ffc847':'#ff4d6d';
+const scoreColor=r.score>=3?'#38ffb0':r.score>=2?'#ffc847':'#ff4d6d';
 const cols=[
-{value:String(r.rank),bold:true,color:rColor},
+{value:String(i+1),bold:true,color:rColor},
 {value:r.name,align:'left',color:'#eaf2ff',bold:i<3},
 {value:String(r.shops),color:'#5a7399'},
 {value:r.aksShare.toFixed(1)+'%',bold:true,color:aksColor},
 {value:r.insShare.toFixed(1)+'%',bold:true,color:insColor},
 {value:r.setShare.toFixed(1)+'%',bold:true,color:setColor},
-{value:r.credShare.toFixed(1)+'%',bold:true,color:credColor}
+{value:r.credShare.toFixed(1)+'%',bold:true,color:credColor},
+{value:r.score+' из 4',bold:true,color:scoreColor}
 ].map((col,ci)=>({...col,w:COLS[ci].w}));
 y=RPT.drawTableRow(ctx,W,y,cols,false);
 });
