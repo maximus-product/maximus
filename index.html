@@ -754,8 +754,31 @@ const t2=APP.data.shops.filter(s=>s.brand==='Т2');const mmb=APP.data.shops.filt
 const sumMetric=(arr,k,sub)=>arr.reduce((s,sh)=>s+(sh[k]?.[sub]||0),0);
 const chartGroups=[{label:'СТО',key:'sto',colT2:'#2d8cff',colMMB:'#00d4ff'},{label:'Аксессуары',key:'aks',colT2:'#38ffb0',colMMB:'#6ee7b7'},{label:'Кредит',key:'credit',colT2:'#ffc847',colMMB:'#fde68a'},{label:'Услуги',key:'services',colT2:'#2dd4bf',colMMB:'#99f6e4'}];
 const allVals=chartGroups.flatMap(g=>[sumMetric(t2,g.key,'plan'),sumMetric(t2,g.key,'forecast'),sumMetric(mmb,g.key,'plan'),sumMetric(mmb,g.key,'forecast')]);
-const maxVal=Math.max(...allVals,1);const BAR_H=120;
-function candlePair(plan,fc,col,sublabel){const planH=Math.round(plan/maxVal*BAR_H);const fcH=Math.round(fc/maxVal*BAR_H);const fcPct=plan>0?Math.round(fc/plan*100):0;const pC=fcPct>=100?'var(--accent3)':fcPct>=80?'var(--gold)':'var(--red)';return'<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1"><div style="font-size:11px;font-weight:900;color:'+pC+'">'+fcPct+'%</div><div style="display:flex;gap:2px;align-items:flex-end;height:'+BAR_H+'px;width:100%"><div style="flex:1;height:'+planH+'px;background:'+col+';opacity:.28;border-radius:3px 3px 0 0" title="План '+sublabel+': '+fmt(plan)+'"></div><div style="flex:1;height:'+fcH+'px;background:'+col+';border-radius:3px 3px 0 0;box-shadow:0 0 8px '+col+'55" title="Прогноз '+sublabel+': '+fmt(fc)+'"></div></div><div style="font-size:9px;color:var(--muted);font-weight:700">'+sublabel+'</div></div>';}
+const maxVal=Math.max(...allVals,1);const BAR_H=140;
+function candlePair(plan,fc,col,sublabel){
+const planH=Math.max(Math.round(plan/maxVal*BAR_H),2);
+const fcH=Math.max(Math.round(fc/maxVal*BAR_H),2);
+const fcPct=plan>0?Math.round(fc/plan*100):0;
+const pC=fcPct>=100?'var(--accent3)':fcPct>=80?'var(--gold)':'var(--red)';
+const gid='cg_'+sublabel+'_'+Math.round(Math.random()*100000);
+return'<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">'+
+'<div style="font-size:13px;font-weight:900;color:'+pC+';letter-spacing:.3px">'+fcPct+'%</div>'+
+'<div style="display:flex;gap:4px;align-items:flex-end;height:'+BAR_H+'px;width:100%;position:relative">'+
+'<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">'+
+'<div style="font-size:8px;color:var(--muted);margin-bottom:3px;font-weight:600">'+fmtShort(plan)+'</div>'+
+'<div style="width:100%;max-width:26px;height:'+planH+'px;background:rgba(255,255,255,0.08);border:1px dashed rgba(255,255,255,0.25);border-radius:5px 5px 0 0"></div>'+
+'</div>'+
+'<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">'+
+'<div style="font-size:8px;color:'+col+';margin-bottom:3px;font-weight:800">'+fmtShort(fc)+'</div>'+
+'<svg width="100%" height="'+fcH+'" style="max-width:26px;overflow:visible" viewBox="0 0 26 '+fcH+'" preserveAspectRatio="none">'+
+'<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+col+'" stop-opacity="1"/><stop offset="100%" stop-color="'+col+'" stop-opacity="0.6"/></linearGradient></defs>'+
+'<rect x="0" y="0" width="26" height="'+fcH+'" rx="5" fill="url(#'+gid+')"/>'+
+'</svg>'+
+'</div>'+
+'</div>'+
+'<div style="font-size:10px;color:var(--white);font-weight:700;letter-spacing:.3px">'+sublabel+'</div>'+
+'</div>';
+}
 let candleGroupsHtml='';
 chartGroups.forEach((g,i)=>{if(i>0)candleGroupsHtml+='<div style="width:1px;background:var(--border);margin:0 6px;align-self:stretch;margin-top:22px"></div>';candleGroupsHtml+='<div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0"><div style="font-size:11px;font-weight:800;color:var(--white);text-align:center;text-transform:uppercase;letter-spacing:.8px">'+g.label+'</div><div style="display:flex;gap:8px">'+candlePair(sumMetric(t2,g.key,'plan'),sumMetric(t2,g.key,'forecast'),g.colT2,'Т2')+candlePair(sumMetric(mmb,g.key,'plan'),sumMetric(mmb,g.key,'forecast'),g.colMMB,'ММБ')+'</div></div>';});
 const chartLegend='<div style="display:flex;gap:20px;justify-content:center;margin-bottom:14px"><div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)"><div style="width:24px;height:8px;border-radius:2px;background:rgba(255,255,255,0.2)"></div>План</div><div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)"><div style="width:24px;height:8px;border-radius:2px;background:var(--accent)"></div>Прогноз</div></div>';
@@ -787,19 +810,23 @@ let sharesHtml='<div style="display:flex;gap:16px;flex-wrap:wrap;justify-content
 sharesData.forEach(g=>{
 const t2Color=g.t2>=g.plan?'var(--accent3)':g.t2>=g.plan*0.8?'var(--gold)':'var(--red)';
 const mmbColor=g.mmb>=g.plan?'var(--accent3)':g.mmb>=g.plan*0.8?'var(--gold)':'var(--red)';
-sharesHtml+='<div style="flex:1;min-width:200px;max-width:250px;display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:12px;">';
-sharesHtml+='<div style="font-size:11px;font-weight:800;color:var(--white);text-align:center;text-transform:uppercase;letter-spacing:.8px">'+g.label+'</div>';
-sharesHtml+='<div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:4px">План: '+g.plan+'%</div>';
-sharesHtml+='<div style="display:flex;gap:8px;">';
-sharesHtml+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">';
-sharesHtml+='<div style="font-size:11px;font-weight:900;color:'+t2Color+'">'+g.t2.toFixed(1)+'%</div>';
-sharesHtml+='<div style="width:100%;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;"><div style="height:100%;width:'+Math.min(g.t2/g.plan*100,100)+'%;background:'+g.colT2+';"></div></div>';
-sharesHtml+='<div style="font-size:9px;color:var(--muted);font-weight:700">Т2</div>';
+sharesHtml+='<div style="flex:1;min-width:220px;max-width:270px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(160deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));border:1px solid var(--border);border-radius:14px;padding:16px;position:relative;overflow:hidden">';
+sharesHtml+='<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,'+g.colT2+','+g.colMMB+')"></div>';
+sharesHtml+='<div style="display:flex;align-items:baseline;justify-content:space-between">';
+sharesHtml+='<div style="font-size:12px;font-weight:800;color:var(--white);text-transform:uppercase;letter-spacing:.6px">'+g.label+'</div>';
+sharesHtml+='<div style="font-size:10px;color:var(--muted);font-weight:600">план '+g.plan+'%</div>';
 sharesHtml+='</div>';
-sharesHtml+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">';
-sharesHtml+='<div style="font-size:11px;font-weight:900;color:'+mmbColor+'">'+g.mmb.toFixed(1)+'%</div>';
-sharesHtml+='<div style="width:100%;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;"><div style="height:100%;width:'+Math.min(g.mmb/g.plan*100,100)+'%;background:'+g.colMMB+';"></div></div>';
-sharesHtml+='<div style="font-size:9px;color:var(--muted);font-weight:700">ММБ</div>';
+sharesHtml+='<div style="display:flex;gap:12px;margin-top:2px">';
+sharesHtml+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">';
+sharesHtml+='<div style="font-size:16px;font-weight:900;color:'+t2Color+'">'+g.t2.toFixed(1)+'%</div>';
+sharesHtml+='<div style="width:100%;height:8px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;position:relative"><div style="height:100%;width:'+Math.min(g.t2/g.plan*100,100)+'%;background:linear-gradient(90deg,'+g.colT2+'99,'+g.colT2+');border-radius:4px"></div><div style="position:absolute;top:0;bottom:0;left:100%;width:1px;background:rgba(255,255,255,0.3)"></div></div>';
+sharesHtml+='<div style="font-size:10px;color:var(--white);font-weight:700;letter-spacing:.3px">Т2</div>';
+sharesHtml+='</div>';
+sharesHtml+='<div style="width:1px;background:var(--border);align-self:stretch;margin:4px 0"></div>';
+sharesHtml+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">';
+sharesHtml+='<div style="font-size:16px;font-weight:900;color:'+mmbColor+'">'+g.mmb.toFixed(1)+'%</div>';
+sharesHtml+='<div style="width:100%;height:8px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;position:relative"><div style="height:100%;width:'+Math.min(g.mmb/g.plan*100,100)+'%;background:linear-gradient(90deg,'+g.colMMB+'99,'+g.colMMB+');border-radius:4px"></div></div>';
+sharesHtml+='<div style="font-size:10px;color:var(--white);font-weight:700;letter-spacing:.3px">ММБ</div>';
 sharesHtml+='</div>';
 sharesHtml+='</div></div>';
 });
@@ -824,28 +851,50 @@ const shops=h.data?.shops||[];
 return shops.reduce((s,sh)=>s+(sh[m.key]?.fact||0),0);
 });
 const hasData=values.map(v=>v>0);
-const maxVal=Math.max(...values,1);
-let html='<div class="chart-card" style="padding:14px 16px">';
-html+='<div style="font-size:11px;font-weight:800;color:var(--white);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">'+m.label+'</div>';
-html+='<div style="display:flex;gap:3px;align-items:flex-end;height:90px">';
+const realValues=values.filter((v,i)=>hasData[i]);
+// Д44-фикс: растягиваем шкалу от МИНИМУМА (не от нуля) — тогда рост/падение реально видны
+const maxVal=Math.max(...realValues,1);
+const minVal=realValues.length?Math.min(...realValues):0;
+const range=Math.max(maxVal-minVal,maxVal*0.05); // защита от деления на 0 при одинаковых значениях
+// Тренд: сравниваем последнее значение с первым реальным
+const firstReal=realValues[0]||0;
+const lastReal=realValues[realValues.length-1]||0;
+const trendUp=lastReal>=firstReal;
+const trendPct=firstReal>0?Math.round((lastReal-firstReal)/firstReal*100):0;
+let html='<div class="chart-card" style="padding:16px 18px;position:relative;overflow:hidden">';
+html+='<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,'+m.color+'00,'+m.color+','+m.color+'00)"></div>';
+html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+html+='<div style="font-size:12px;font-weight:800;color:var(--white);text-transform:uppercase;letter-spacing:.6px">'+m.label+'</div>';
+if(realValues.length>=2){
+const trendColor=trendUp?'var(--accent3)':'var(--red)';
+const trendIcon=trendUp?'↑':'↓';
+html+='<div style="font-size:11px;font-weight:800;color:'+trendColor+';display:flex;align-items:center;gap:2px">'+trendIcon+' '+Math.abs(trendPct)+'%</div>';
+}
+html+='</div>';
+html+='<div style="display:flex;gap:4px;align-items:flex-end;height:100px;position:relative">';
 last12.forEach((h,i)=>{
 const v=values[i];
 const has=hasData[i];
-const barH=has?Math.max(Math.round(v/maxVal*100),4):0;
+// Высота относительно диапазона (min..max), а не абсолютного нуля — visually amplifies differences
+const barH=has?Math.max(Math.round((v-minVal)/range*78)+18,18):0;
 html+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0">';
 if(has){
-html+='<div style="font-size:8px;font-weight:800;color:'+m.color+';margin-bottom:3px;white-space:nowrap;line-height:1">'+fmtShort(v)+'</div>';
-html+='<div style="width:100%;max-width:14px;height:'+barH+'%;background:'+m.color+';border-radius:3px 3px 0 0;min-height:3px" title="'+(h.label||'')+': '+fmtShort(v)+'"></div>';
+html+='<div style="font-size:9px;font-weight:800;color:var(--white);margin-bottom:4px;white-space:nowrap;line-height:1">'+fmtShort(v)+'</div>';
+const gradId='grad_'+m.key+'_'+i;
+html+='<svg width="100%" height="'+barH+'" style="max-width:22px;overflow:visible" viewBox="0 0 22 '+barH+'" preserveAspectRatio="none">';
+html+='<defs><linearGradient id="'+gradId+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+m.color+'" stop-opacity="1"/><stop offset="100%" stop-color="'+m.color+'" stop-opacity="0.55"/></linearGradient></defs>';
+html+='<rect x="0" y="0" width="22" height="'+barH+'" rx="4" fill="url(#'+gradId+')"/>';
+html+='</svg>';
 }else{
-html+='<div style="height:11px"></div>';
-html+='<div style="width:100%;max-width:14px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px"></div>';
+html+='<div style="height:13px"></div>';
+html+='<div style="width:100%;max-width:22px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px"></div>';
 }
 html+='</div>';
 });
 html+='</div>';
-html+='<div style="display:flex;gap:3px;margin-top:6px">';
+html+='<div style="display:flex;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05)">';
 last12.forEach(h=>{
-html+='<div style="flex:1;font-size:7px;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden">'+(h.label||'').split(' ')[0].slice(0,3)+'</div>';
+html+='<div style="flex:1;font-size:8px;font-weight:600;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden">'+(h.label||'').split(' ')[0].slice(0,3)+'</div>';
 });
 html+='</div>';
 html+='</div>';
@@ -1172,32 +1221,51 @@ const shops=(h.data?.shops||[]).filter(s=>s[staffKey]===name);
 return shops.reduce((s,sh)=>s+(sh[m.key]?.fact||0),0);
 });
 const hasData=values.map(v=>v>0);
-const maxVal=Math.max(...values,1);
-let html='<div class="chart-card" style="padding:14px 16px">';
-html+='<div style="font-size:11px;font-weight:800;color:var(--white);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">'+m.label+'</div>';
-html+='<div style="display:flex;gap:3px;align-items:flex-end;height:90px">';
+const realValues=values.filter((v,i)=>hasData[i]);
+const maxVal=Math.max(...realValues,1);
+const minVal=realValues.length?Math.min(...realValues):0;
+const range=Math.max(maxVal-minVal,maxVal*0.05);
+const firstReal=realValues[0]||0;
+const lastReal=realValues[realValues.length-1]||0;
+const trendUp=lastReal>=firstReal;
+const trendPct=firstReal>0?Math.round((lastReal-firstReal)/firstReal*100):0;
+let html='<div class="chart-card" style="padding:16px 18px;position:relative;overflow:hidden">';
+html+='<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,'+m.color+'00,'+m.color+','+m.color+'00)"></div>';
+html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+html+='<div style="font-size:12px;font-weight:800;color:var(--white);text-transform:uppercase;letter-spacing:.6px">'+m.label+'</div>';
+if(realValues.length>=2){
+const trendColor=trendUp?'var(--accent3)':'var(--red)';
+const trendIcon=trendUp?'↑':'↓';
+html+='<div style="font-size:11px;font-weight:800;color:'+trendColor+';display:flex;align-items:center;gap:2px">'+trendIcon+' '+Math.abs(trendPct)+'%</div>';
+}
+html+='</div>';
+html+='<div style="display:flex;gap:4px;align-items:flex-end;height:100px;position:relative">';
 last12.forEach((h,i)=>{
 const v=values[i];
 const has=hasData[i];
-const barH=has?Math.max(Math.round(v/maxVal*100),4):0;
+const barH=has?Math.max(Math.round((v-minVal)/range*78)+18,18):0;
 html+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0">';
 if(has){
-html+='<div style="font-size:8px;font-weight:800;color:'+m.color+';margin-bottom:3px;white-space:nowrap;line-height:1">'+fmtShort(v)+'</div>';
-html+='<div style="width:100%;max-width:14px;height:'+barH+'%;background:'+m.color+';border-radius:3px 3px 0 0;min-height:3px" title="'+(h.label||'')+': '+fmtShort(v)+'"></div>';
+html+='<div style="font-size:9px;font-weight:800;color:var(--white);margin-bottom:4px;white-space:nowrap;line-height:1">'+fmtShort(v)+'</div>';
+const gradId='pgrad_'+m.key+'_'+i;
+html+='<svg width="100%" height="'+barH+'" style="max-width:22px;overflow:visible" viewBox="0 0 22 '+barH+'" preserveAspectRatio="none">';
+html+='<defs><linearGradient id="'+gradId+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+m.color+'" stop-opacity="1"/><stop offset="100%" stop-color="'+m.color+'" stop-opacity="0.55"/></linearGradient></defs>';
+html+='<rect x="0" y="0" width="22" height="'+barH+'" rx="4" fill="url(#'+gradId+')"/>';
+html+='</svg>';
 }else{
-html+='<div style="height:11px"></div>';
-html+='<div style="width:100%;max-width:14px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px"></div>';
+html+='<div style="height:13px"></div>';
+html+='<div style="width:100%;max-width:22px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px"></div>';
 }
 html+='</div>';
 });
 html+='</div>';
-html+='<div style="display:flex;gap:3px;margin-top:6px">';
+html+='<div style="display:flex;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05)">';
 last12.forEach(h=>{
-html+='<div style="flex:1;font-size:7px;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden">'+(h.label||'').split(' ')[0].slice(0,3)+'</div>';
+html+='<div style="flex:1;font-size:8px;font-weight:600;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden">'+(h.label||'').split(' ')[0].slice(0,3)+'</div>';
 });
 html+='</div>';
 html+='</div>';
-return {html,hasAny:values.some(v=>v>0)};
+return{html,hasAny:values.some(v=>v>0)};
 }
 
 async function renderPersonMonthlyChart(pageId,name){
