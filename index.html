@@ -1792,7 +1792,7 @@ RPT.download(canvas,'рейтинг_кураторов_'+new Date().toLocaleDate
 }
 
 function genCuratorMetricReport(metricKey){
-const METRIC_INFO={revenue:{label:'Товарная выручка',shopKey:'revenue'},aks:{label:'Аксессуары',shopKey:'aks'},services:{label:'Услуги',shopKey:'services'},sto:{label:'СТО',shopKey:'sto'},settings:{label:'Настройки',shopKey:'settings'},aks_priority:{label:'Акс Приоритет',shopKey:'aks_priority'},insurance:{label:'Страховки',shopKey:'insurance'}};
+const METRIC_INFO={revenue:{label:'Товарная выручка',shopKey:'revenue'},aks:{label:'Аксессуары',shopKey:'aks'},services:{label:'Услуги',shopKey:'services'},sto:{label:'СТО',shopKey:'sto'},settings:{label:'Настройки',shopKey:'settings'},aks_priority:{label:'Акс Приоритет',shopKey:'aks_priority'},insurance:{label:'Страховки',shopKey:'insurance'},credit:{label:'Кредит',shopKey:'credit'}};
 const info=METRIC_INFO[metricKey];if(!info)return;
 const curators=APP.data.staff.curators;
 const rows=curators.map(name=>{const myShops=APP.data.shops.filter(s=>s.curator===name);const plan=myShops.reduce((s,sh)=>s+(sh[info.shopKey]?.plan||0),0);const fact=myShops.reduce((s,sh)=>s+(sh[info.shopKey]?.fact||0),0);const fc=myShops.reduce((s,sh)=>s+(sh[info.shopKey]?.forecast||0),0);const pct=plan>0?Math.round(fc/plan*100):0;return{name,plan,fact,fc,pct,shops:myShops.length};}).sort((a,b)=>b.pct-a.pct);
@@ -1815,7 +1815,7 @@ RPT.download(canvas,info.label.replace(/ /g,'_')+'_кураторы_'+new Date()
 }
 
 function genCuratorMetricReport2(curatorName,metricKey){
-const METRIC_INFO={revenue:{label:'Товарная выручка',shopKey:'revenue'},aks:{label:'Аксессуары',shopKey:'aks'},services:{label:'Услуги',shopKey:'services'},sto:{label:'СТО',shopKey:'sto'},settings:{label:'Настройки',shopKey:'settings'},aks_priority:{label:'Акс Приоритет',shopKey:'aks_priority'},insurance:{label:'Страховки',shopKey:'insurance'}};
+const METRIC_INFO={revenue:{label:'Товарная выручка',shopKey:'revenue'},aks:{label:'Аксессуары',shopKey:'aks'},services:{label:'Услуги',shopKey:'services'},sto:{label:'СТО',shopKey:'sto'},settings:{label:'Настройки',shopKey:'settings'},aks_priority:{label:'Акс Приоритет',shopKey:'aks_priority'},insurance:{label:'Страховки',shopKey:'insurance'},credit:{label:'Кредит',shopKey:'credit'}};
 const info=METRIC_INFO[metricKey];if(!info)return;
 const myShops=APP.data.shops.filter(s=>s.curator===curatorName);
 if(!myShops.length){alert('Нет магазинов');return;}
