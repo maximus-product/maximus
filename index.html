@@ -517,6 +517,339 @@ ondrop="handleDropFinal(event)">
 <script>
 const SUPABASE_URL='https://maximus-proxy.arakelov2207.workers.dev';
 // ═══════════════════════════════════════════════
+// ОТЧЁТ "СРАВНЕНИЕ ПО МЕСЯЦАМ" — Canvas-версия диаграмм с главной страницы
+// ═══════════════════════════════════════════════
+async function genMonthlyComparisonReport(){
+let historyData=APP._cachedHistoryData;
+if(!historyData){
+historyData=await DB.loadAllHistoryData();
+APP._cachedHistoryData=historyData;
+}
+if(!historyData||historyData.length===0){
+alert('Нет архивных данных за прошлые месяцы. Загрузите итоговый файл через кнопку загрузки (тип "Итоговый").');
+return;
+}
+const last12=historyData.slice(-12);
+const METRICS_MONTHLY=[
+{key:'revenue',label:'Выручка',color:'#2d8cff'},
+{key:'sto',label:'СТО',color:'#00d4ff'},
+{key:'aks',label:'Аксессуары',color:'#38ffb0'},
+{key:'insurance',label:'Страховки',color:'#ffc847'},
+{key:'settings',label:'Настройки',color:'#a78bfa'},
+{key:'credit',label:'Кредит',color:'#2dd4bf'},
+{key:'services',label:'Услуги',color:'#a3e635'},
+];
+
+const CARD_W=280,CARD_H=170,GAP=18,PAD=32;
+const COLS_N=3;
+const ROWS_N=Math.ceil(METRICS_MONTHLY.length/COLS_N);
+const W=PAD*2+CARD_W*COLS_N+GAP*(COLS_N-1);
+const H=120+ROWS_N*(CARD_H+GAP)+60;
+
+const canvas=document.createElement('canvas');
+canvas.width=W;canvas.height=H;
+const ctx=canvas.getContext('2d');
+ctx.fillStyle='#060c1a';ctx.fillRect(0,0,W,H);
+
+let y=RPT.drawHeader(ctx,W,'Сравнение по месяцам','факт · последние '+last12.length+' мес');
+y+=16;
+
+METRICS_MONTHLY.forEach((m,idx)=>{
+const col=idx%COLS_N;
+const row=Math.floor(idx/COLS_N);
+const x=PAD+col*(CARD_W+GAP);
+const cy=y+row*(CARD_H+GAP);
+
+const values=last12.map(h=>{
+const shops=h.data?.shops||[];
+return shops.reduce((s,sh)=>s+(sh[m.key]?.fact||0),0);
+});
+const hasData=values.map(v=>v>0);
+const realValues=values.filter((v,i)=>hasData[i]);
+const maxVal=Math.max(...realValues,1);
+const minVal=realValues.length?Math.min(...realValues):0;
+const range=Math.max(maxVal-minVal,maxVal*0.05);
+const firstReal=realValues[0]||0;
+const lastReal=realValues[realValues.length-1]||0;
+const trendUp=lastReal>=firstReal;
+const trendPct=firstReal>0?Math.round((lastReal-firstReal)/firstReal*100):0;
+
+// Карточка
+const cardGrad=ctx.createLinearGradient(x,cy,x,cy+CARD_H);
+cardGrad.addColorStop(0,'#0f1e38');cardGrad.addColorStop(1,'#0a1428');
+RPT.roundRect(ctx,x,cy,CARD_W,CARD_H,14,cardGrad);
+
+// Цветная линия сверху
+ctx.strokeStyle=m.color;ctx.lineWidth=2;
+ctx.beginPath();ctx.moveTo(x+14,cy+2);ctx.lineTo(x+CARD_W-14,cy+2);ctx.stroke();
+
+// Заголовок + тренд
+ctx.font='bold 11px Arial';ctx.fillStyle='#ffffff';ctx.textAlign='left';
+ctx.fillText(m.label.toUpperCase(),x+14,cy+22);
+if(realValues.length>=2){
+const trendColor=trendUp?'#38ffb0':'#ff4d6d';
+const trendIcon=trendUp?'↑':'↓';
+ctx.font='bold 11px Arial';ctx.fillStyle=trendColor;ctx.textAlign='right';
+ctx.fillText(trendIcon+' '+Math.abs(trendPct)+'%',x+CARD_W-14,cy+22);
+ctx.textAlign='left';
+}
+
+// Столбцы
+const chartX=x+14,chartY=cy+34,chartW=CARD_W-28,chartH=90;
+const barGap=3;
+const barW=(chartW-(barGap*(last12.length-1)))/last12.length;
+
+last12.forEach((h,i)=>{
+const v=values[i];
+const has=hasData[i];
+const bx=chartX+i*(barW+barGap);
+if(has){
+const barH=Math.max(Math.round((v-minVal)/range*(chartH-24))+14,14);
+const by=chartY+chartH-barH;
+const gid='mgrad_'+m.key+'_'+idx+'_'+i;
+const grad=ctx.createLinearGradient(0,by,0,by+barH);
+grad.addColorStop(0,m.color);
+grad.addColorStop(1,m.color+'80');
+RPT.roundRect(ctx,bx,by,barW,barH,3,grad);
+// Значение над столбцом
+ctx.font='bold 7px Arial';ctx.fillStyle='#ffffff';ctx.textAlign='center';
+ctx.fillText(fmtShort(v),bx+barW/2,by-3);
+}else{
+ctx.fillStyle='rgba(255,255,255,0.08)';
+ctx.fillRect(bx,chartY+chartH-3,barW,3);
+}
+// Подпись месяца
+ctx.font='7px Arial';ctx.fillStyle='#5a7399';ctx.textAlign='center';
+ctx.fillText((h.label||'').split(' ')[0].slice(0,3),bx+barW/2,chartY+chartH+12);
+});
+ctx.textAlign='left';
+});
+
+const finalY=y+ROWS_N*(CARD_H+GAP)+10;
+ctx.font='11px Arial';ctx.fillStyle='#5a7399';
+ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,finalY+16);
+
+RPT.download(canvas,'сравнение_по_месяцам_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+// ═══════════════════════════════════════════════
+// ОТЧЁТ "ВЫПОЛНЕНИЕ СЕТИ" — визуальные KPI-карточки как на главной
+// ═══════════════════════════════════════════════
+function genNetworkKpiReport(){
+const D=APP.data;
+const shops=D.shops;
+
+const METRICS_KPI=[
+{key:'revenue',label:'Выручка',color:'#2d8cff'},
+{key:'sto',label:'СТО',color:'#00d4ff'},
+{key:'aks',label:'Аксессуары',color:'#38ffb0'},
+{key:'insurance',label:'Страховки',color:'#ffc847'},
+{key:'settings',label:'Настройки',color:'#a78bfa'},
+{key:'credit',label:'Кредит',color:'#2dd4bf'},
+{key:'services',label:'Услуги',color:'#a3e635'},
+];
+
+const cardsData=METRICS_KPI.map(m=>{
+const plan=shops.reduce((s,sh)=>s+(sh[m.key]?.plan||0),0);
+const fact=shops.reduce((s,sh)=>s+(sh[m.key]?.fact||0),0);
+const forecast=shops.reduce((s,sh)=>s+(sh[m.key]?.forecast||0),0);
+const fcPct=plan>0?Math.round(forecast/plan*100):0;
+const factPct=plan>0?Math.round(fact/plan*100):0;
+return{...m,plan,fact,forecast,fcPct,factPct};
+});
+
+const CARD_W=280,CARD_H=200,GAP=20,PAD=32;
+const COLS_N=4;
+const ROWS_N=Math.ceil(cardsData.length/COLS_N);
+const W=PAD*2+CARD_W*COLS_N+GAP*(COLS_N-1);
+const H=120+ROWS_N*(CARD_H+GAP)+60;
+
+const canvas=document.createElement('canvas');
+canvas.width=W;canvas.height=H;
+const ctx=canvas.getContext('2d');
+ctx.fillStyle='#060c1a';ctx.fillRect(0,0,W,H);
+
+let y=RPT.drawHeader(ctx,W,'Выполнение сети','план · факт · прогноз по всем показателям');
+y+=20;
+
+cardsData.forEach((c,i)=>{
+const col=i%COLS_N;
+const row=Math.floor(i/COLS_N);
+const x=PAD+col*(CARD_W+GAP);
+const cy=y+row*(CARD_H+GAP);
+
+const cardGrad=ctx.createLinearGradient(x,cy,x,cy+CARD_H);
+cardGrad.addColorStop(0,'#0f1e38');cardGrad.addColorStop(1,'#0a1428');
+RPT.roundRect(ctx,x,cy,CARD_W,CARD_H,16,cardGrad);
+
+// Цветная линия сверху карточки
+ctx.strokeStyle=c.color;ctx.lineWidth=3;
+ctx.beginPath();ctx.moveTo(x+16,cy+2);ctx.lineTo(x+CARD_W-16,cy+2);ctx.stroke();
+
+// Название показателя
+ctx.font='bold 12px Arial';ctx.fillStyle='#ffffff';ctx.textAlign='left';
+ctx.fillText(c.label.toUpperCase(),x+18,cy+30);
+
+// Крупный % прогноза
+const pctColor=c.fcPct>=100?'#38ffb0':c.fcPct>=80?'#ffc847':'#ff4d6d';
+ctx.font='bold 42px Arial';ctx.fillStyle=pctColor;
+ctx.fillText(c.fcPct+'%',x+18,cy+82);
+
+// Прогресс-бар
+const barY=cy+96,barW=CARD_W-36,barH=6;
+ctx.fillStyle='rgba(255,255,255,0.08)';
+RPT.roundRect(ctx,x+18,barY,barW,barH,3,'rgba(255,255,255,0.08)');
+const fillW=Math.min(c.fcPct/100,1)*barW;
+RPT.roundRect(ctx,x+18,barY,fillW,barH,3,pctColor);
+
+// План / Факт / Прогноз в ряд
+const bottomY=cy+CARD_H-38;
+ctx.font='bold 9px Arial';ctx.fillStyle='#5a7399';
+ctx.fillText('ПЛАН',x+18,bottomY);
+ctx.fillText('ФАКТ',x+18+(CARD_W-36)/3,bottomY);
+ctx.fillText('ПРОГНОЗ',x+18+(CARD_W-36)*2/3,bottomY);
+
+ctx.font='bold 13px Arial';ctx.fillStyle='#ffffff';
+ctx.fillText(RPT.fmt(c.plan),x+18,bottomY+18);
+const factColor=c.factPct>=100?'#38ffb0':c.factPct>=80?'#ffc847':'#ff4d6d';
+ctx.fillStyle=factColor;
+ctx.fillText(RPT.fmt(c.fact),x+18+(CARD_W-36)/3,bottomY+18);
+ctx.fillStyle='#ffffff';
+ctx.fillText(RPT.fmt(c.forecast),x+18+(CARD_W-36)*2/3,bottomY+18);
+});
+
+const finalY=y+ROWS_N*(CARD_H+GAP)+10;
+ctx.font='11px Arial';ctx.fillStyle='#5a7399';
+ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,finalY+16);
+
+RPT.download(canvas,'выполнение_сети_кпи_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+// ═══════════════════════════════════════════════
+// ОТЧЁТ "ТОП ЛУЧШИХ" — топ-1 по каждой категории
+// ═══════════════════════════════════════════════
+function genTopBestReport(){
+const D=APP.data;
+
+// Топ-1 магазин
+const topShop=[...D.shops].map(s=>({...s,rPct:shopRatingPct(s)})).sort((a,b)=>b.rPct-a.rPct)[0];
+
+// Топ-1 куратор Т2 и ММБ
+const curatorsAll=getFinalStaffList('curators');
+const curatorsT2=curatorsAll.filter(p=>getCuratorBrand(p.name)==='Т2').sort((a,b)=>a.rank-b.rank)[0];
+const curatorsMMB=curatorsAll.filter(p=>getCuratorBrand(p.name)==='ММБ').sort((a,b)=>a.rank-b.rank)[0];
+
+// Топ-1 топ-команда и зам
+const topkAll=getFinalStaffList('topk');
+const topTopk=topkAll.sort((a,b)=>a.rank-b.rank)[0];
+const zamAll=getFinalStaffList('zam');
+const topZam=zamAll.sort((a,b)=>a.rank-b.rank)[0];
+
+const cards=[
+{title:'Магазин',name:topShop?topShop.name.slice(0,28):'—',sub:topShop?'Рейтинг: '+topShop.rPct+'%':'',code:topShop?topShop.kod:''},
+{title:'Куратор Т2',name:curatorsT2?curatorsT2.name:'—',sub:curatorsT2?'Итог: '+curatorsT2.itog:'',code:''},
+{title:'Куратор ММБ',name:curatorsMMB?curatorsMMB.name:'—',sub:curatorsMMB?'Итог: '+curatorsMMB.itog:'',code:''},
+{title:'Топ Команда',name:topTopk?topTopk.name:'—',sub:topTopk?'Итог: '+topTopk.itog:'',code:''},
+{title:'Зам РОП',name:topZam?topZam.name:'—',sub:topZam?'Итог: '+topZam.itog:'',code:''},
+];
+
+const CARD_W=340,CARD_H=260,GAP=24,PAD=32;
+const COLS_N=3;
+const ROWS_N=Math.ceil(cards.length/COLS_N);
+const W=PAD*2+CARD_W*COLS_N+GAP*(COLS_N-1);
+const H=120+ROWS_N*(CARD_H+GAP)+60;
+
+const canvas=document.createElement('canvas');
+canvas.width=W;canvas.height=H;
+const ctx=canvas.getContext('2d');
+
+// Фон с лёгким градиентом
+const bgGrad=ctx.createLinearGradient(0,0,0,H);
+bgGrad.addColorStop(0,'#060c1a');bgGrad.addColorStop(1,'#040814');
+ctx.fillStyle=bgGrad;ctx.fillRect(0,0,W,H);
+
+let y=RPT.drawHeader(ctx,W,'🏆 ТОП Лучших','лучшие по итогам месяца');
+y+=20;
+
+cards.forEach((c,i)=>{
+const col=i%COLS_N;
+const row=Math.floor(i/COLS_N);
+const x=PAD+col*(CARD_W+GAP);
+const cy=y+row*(CARD_H+GAP);
+
+// Карточка с градиентной рамкой
+const cardGrad=ctx.createLinearGradient(x,cy,x,cy+CARD_H);
+cardGrad.addColorStop(0,'#0f1e38');cardGrad.addColorStop(1,'#0a1428');
+RPT.roundRect(ctx,x,cy,CARD_W,CARD_H,18,cardGrad);
+
+// Золотая обводка сверху
+ctx.strokeStyle='#ffc847';ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(x+18,cy);
+ctx.lineTo(x+CARD_W-18,cy);
+ctx.stroke();
+
+// Золотая медаль (круг с #1)
+const medalCX=x+CARD_W/2,medalCY=cy+58;
+const medalGrad=ctx.createRadialGradient(medalCX,medalCY,5,medalCX,medalCY,38);
+medalGrad.addColorStop(0,'#ffe27a');medalGrad.addColorStop(1,'#d4a017');
+ctx.beginPath();ctx.arc(medalCX,medalCY,38,0,Math.PI*2);ctx.fillStyle=medalGrad;ctx.fill();
+ctx.strokeStyle='#fff8dc';ctx.lineWidth=3;ctx.stroke();
+ctx.font='bold 30px Arial';ctx.fillStyle='#5c3d00';ctx.textAlign='center';
+ctx.fillText('1',medalCX,medalCY+11);
+
+// Название категории
+ctx.font='bold 12px Arial';ctx.fillStyle='#5a7399';ctx.textAlign='center';
+ctx.fillText(c.title.toUpperCase(),x+CARD_W/2,cy+118);
+
+// Имя/название
+ctx.font='bold 17px Arial';ctx.fillStyle='#ffffff';
+const nameLines=wrapText(ctx,c.name,CARD_W-40);
+let ny=cy+146;
+nameLines.forEach(line=>{ctx.fillText(line,x+CARD_W/2,ny);ny+=22;});
+
+// Код магазина (если есть)
+if(c.code){
+ctx.font='11px Arial';ctx.fillStyle='#00d4ff';
+ctx.fillText(c.code,x+CARD_W/2,ny+4);
+ny+=20;
+}
+
+// Подпись (итог/рейтинг)
+if(c.sub){
+ctx.font='bold 13px Arial';ctx.fillStyle='#38ffb0';
+ctx.fillText(c.sub,x+CARD_W/2,ny+8);
+}
+
+ctx.textAlign='left';
+});
+
+const finalY=y+ROWS_N*(CARD_H+GAP)+10;
+ctx.font='11px Arial';ctx.fillStyle='#5a7399';ctx.textAlign='left';
+ctx.fillText('Сформировано: '+new Date().toLocaleString('ru-RU')+' · МАКСИМУС',24,finalY+16);
+
+RPT.download(canvas,'топ_лучших_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'-'));
+}
+
+// Вспомогательная функция переноса текста по ширине
+function wrapText(ctx,text,maxWidth){
+const words=text.split(' ');
+const lines=[];
+let currentLine=words[0]||'';
+for(let i=1;i<words.length;i++){
+const testLine=currentLine+' '+words[i];
+if(ctx.measureText(testLine).width>maxWidth){
+lines.push(currentLine);
+currentLine=words[i];
+}else{
+currentLine=testLine;
+}
+}
+lines.push(currentLine);
+return lines;
+}
+
+// ═══════════════════════════════════════════════
 // ЕДИНЫЙ ИСТОЧНИК СПИСКА СОТРУДНИКОВ (Д41-фикс)
 // Используется и в таблице рейтинга, и во всех отчётах — чтобы списки совпадали
 // ═══════════════════════════════════════════════
@@ -728,7 +1061,7 @@ const KPI_ALL=[
 {netKey:'credit',shopKey:'credit',label:'Кредит',c:'c-teal'},
 {netKey:'services',shopKey:'services',label:'Услуги',c:'c-lime'},
 ];
-let kpis='<div class="sec-hdr" style="margin-top:0"><div class="sec-title">Планы сети</div><div class="net-filter"><button class="net-btn'+(homeNetFilter==='all'?' active':'')+'" onclick="setHomeFilter(\'all\')">ММБ + Т2</button><button class="net-btn'+(homeNetFilter==='t2'?' active':'')+'" onclick="setHomeFilter(\'t2\')">Т2</button><button class="net-btn'+(homeNetFilter==='mmb'?' active':'')+'" onclick="setHomeFilter(\'mmb\')">ММБ</button><button class="report-btn" style="margin-left:auto" onclick="showReportMenu(\'home\')">📄 Отчёты ▾</button></div><div id="report-menu-home" class="report-menu" style="display:none"><div class="report-menu-item" onclick="genNetworkReport()">📊 Выполнение сети</div><div class="report-menu-item" onclick="genSharesReport()">📊 Доли</div></div><div class="sec-line"></div></div><div class="kpi-grid">';
+let kpis='<div class="sec-hdr" style="margin-top:0"><div class="sec-title">Планы сети</div><div class="net-filter"><button class="net-btn'+(homeNetFilter==='all'?' active':'')+'" onclick="setHomeFilter(\'all\')">ММБ + Т2</button><button class="net-btn'+(homeNetFilter==='t2'?' active':'')+'" onclick="setHomeFilter(\'t2\')">Т2</button><button class="net-btn'+(homeNetFilter==='mmb'?' active':'')+'" onclick="setHomeFilter(\'mmb\')">ММБ</button><button class="report-btn" style="margin-left:auto" onclick="showReportMenu(\'home\')">📄 Отчёты ▾</button></div><div id="report-menu-home" class="report-menu" style="display:none"><div class="report-menu-item" onclick="genTopBestReport()">🏆 ТОП Лучших</div><div class="report-menu-item" onclick="genNetworkReport()">💰 Выручка</div><div class="report-menu-item" onclick="genNetworkKpiReport()">📈 Выполнение сети</div><div class="report-menu-item" onclick="genSharesReport()">📊 Доли</div><div class="report-menu-item" onclick="genMonthlyComparisonReport()">📅 Сравнение по месяцам</div></div><div class="sec-line"></div></div><div class="kpi-grid">';
 KPI_ALL.forEach(k=>{
 if(homeNetFilter==='t2'&&k.brandFilter==='ММБ')return;
 if(homeNetFilter==='mmb'&&k.brandFilter==='Т2')return;
@@ -1198,7 +1531,7 @@ const safeName=name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30);
 const roleLabels={curators:'Куратор',topk:'Топ Команда',zam:'Зам РОП'};
 const roleLabel=roleLabels[pageId]||'Сотрудник';
 const pr=APP.profiles[name]||{};
-const reportBtn=pageId==='curators'?'<div style="position:relative;display:inline-block"><button class="report-btn" onclick="togglePersonMenu(\''+safeName+'\')">📄 Отчёты ▾</button><div id="pmenu_'+safeName+'" style="display:none;position:absolute;top:110%;left:0;z-index:100;background:#0b1428;border:1px solid rgba(100,160,255,0.25);border-radius:12px;padding:8px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:4px 10px 8px;font-weight:700">Выберите отчёт</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'revenue\')">📊 Товарная выручка — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'sto\')">📱 СТО — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks\')">🛍 Аксессуары — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'credit\')">💳 Кредит — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks_priority\')">⭐ Акс Приоритет — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'settings\')">⚙️ Настройки — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'insurance\')">🛡 Страховки — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'services\')">📡 Услуги — магазины</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'full\')">📋 Общее выполнение планов</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'vmp\')">📐 ВМП с разбивкой</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'shops\')">🏪 Рейтинг магазинов</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'all\')" style="color:#00d4ff;border-color:rgba(0,212,255,0.3)">⬇ Все отчёты сразу</div></div></div>':'';
+const reportBtn=(pageId==='curators'||pageId==='topk'||pageId==='zam')?'<div style="position:relative;display:inline-block"><button class="report-btn" onclick="togglePersonMenu(\''+safeName+'\')">📄 Отчёты ▾</button><div id="pmenu_'+safeName+'" style="display:none;position:absolute;top:110%;left:0;z-index:100;background:#0b1428;border:1px solid rgba(100,160,255,0.25);border-radius:12px;padding:8px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"><div style="font-size:10px;color:#5a7399;text-transform:uppercase;letter-spacing:1px;padding:4px 10px 8px;font-weight:700">Выберите отчёт</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'revenue\')">📊 Товарная выручка — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'sto\')">📱 СТО — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks\')">🛍 Аксессуары — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'credit\')">💳 Кредит — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'aks_priority\')">⭐ Акс Приоритет — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'settings\')">⚙️ Настройки — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'insurance\')">🛡 Страховки — магазины</div><div class="report-menu-item" onclick="genCuratorMetricReport2(\''+name.replace(/'/g,"\\'")+'\',\'services\')">📡 Услуги — магазины</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'full\')">📋 Общее выполнение планов</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'vmp\')">📐 ВМП с разбивкой</div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'shops\')">🏪 Рейтинг магазинов</div><div style="height:1px;background:rgba(100,160,255,0.1);margin:6px 0"></div><div class="report-menu-item" onclick="genPersonReport(\''+name.replace(/'/g,"\\'")+'\',\'all\')" style="color:#00d4ff;border-color:rgba(0,212,255,0.3)">⬇ Все отчёты сразу</div></div></div>':'';
 const content='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap"><div class="detail-back" style="margin-bottom:0" onclick="renderProfiles();navTo(\'profiles\')">← Назад к профилям</div>'+reportBtn+'</div><div class="detail-header">'+avatarHtml(name,72)+'<div class="detail-info"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="detail-name">'+name+'</div><button class="row-btn" onclick="event.stopPropagation();openPM(\''+name.replace(/'/g,"\\'")+'\')" style="font-size:11px;padding:6px 14px">✎ Редактировать профиль</button></div><div class="detail-role">'+roleLabel+(person?' · Рейтинг #'+person.rank:'')+'</div><div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">'+(pr.phone?'<span style="font-size:12px;color:var(--muted)">📞 '+pr.phone+'</span>':'')+(pr.tg?'<span style="font-size:12px;color:var(--muted)">✈ '+pr.tg+'</span>':'')+(pr.birthday?'<span style="font-size:12px;color:var(--gold)">🎂 '+formatBirthday(pr.birthday)+'</span>':'')+'<span style="font-size:12px;color:var(--muted)">'+myShops.length+' магазинов</span></div></div></div><div class="sec-hdr" style="margin-top:0"><div class="sec-title">Сводка по показателям</div><div class="sec-badge">'+myShops.length+' магазинов</div><div class="sec-line"></div></div>'+kpisH+bestShopsH+'<div class="sec-hdr"><div class="sec-title">Магазины</div><div class="sec-badge">'+myShops.length+' точек</div><div class="sec-line"></div></div>'+shopTableHtml(myShops,'kod',1,pageId+'_detail');
 let _detailSortKey='kod',_detailSortDir=1;
 window['__shopColSort_'+pageId+'_detail']=function(key){
