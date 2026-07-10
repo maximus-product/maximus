@@ -48,8 +48,8 @@ main{flex:1;padding:26px 32px 60px;max-width:1700px;margin:0 auto;width:100%}
 .page.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
-.kpi-card{background:linear-gradient(160deg,var(--card) 0%,var(--card2) 100%);border:1px solid var(--border);border-radius:16px;padding:16px 18px 14px;position:relative;overflow:hidden;transition:transform .2s,border-color .25s,box-shadow .25s;cursor:default}
-.kpi-card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.kpi-card{background:linear-gradient(160deg,var(--card) 0%,var(--card2) 100%);border:1px solid var(--border);border-radius:18px;padding:18px 20px 16px;position:relative;overflow:hidden;transition:transform .25s cubic-bezier(.4,0,.2,1),border-color .25s,box-shadow .3s;cursor:default;box-shadow:0 8px 24px rgba(0,0,0,0.25),0 1px 0 rgba(255,255,255,0.04) inset}
+.kpi-card:hover{transform:translateY(-4px) scale(1.01);border-color:var(--border2);box-shadow:0 16px 40px rgba(139,92,246,0.15),0 1px 0 rgba(255,255,255,0.06) inset}
 .kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:16px 16px 0 0}
 .kpi-card.c-blue::after{background:linear-gradient(90deg,var(--accent),var(--accent2))}
 .kpi-card.c-cyan::after{background:linear-gradient(90deg,var(--accent2),#00ffcc)}
@@ -1044,8 +1044,24 @@ function kpiCardHtml(label,fact,plan,forecast,color){
 const fcPct=plan>0?Math.round(forecast/plan*100):0;
 const factPct=plan>0?Math.round(fact/plan*100):0;
 const progW=Math.min(fcPct,100);const progC=pctColor(fcPct);
-if(!plan)return'<div class="kpi-card '+color+'"><div class="kpi-label">'+label+'</div><div class="kpi-pct-row"><div class="kpi-forecast-main">'+fmt(fact)+'</div><div style="font-size:12px;font-weight:700;color:var(--text);opacity:.6;align-self:flex-end;padding-bottom:3px">факт</div></div></div>';
-return'<div class="kpi-card '+color+'"><div class="kpi-label">'+label+'</div><div class="kpi-pct-row">'+pctBadge(fcPct,16)+'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><span style="font-size:10px;font-weight:700;color:var(--text);opacity:.5;text-transform:uppercase;letter-spacing:.5px">прогноз</span><span style="font-size:13px;font-weight:800;color:var(--white)">'+fmt(forecast)+'</span></div></div><div class="kpi-prog-track"><div class="kpi-prog-fill" style="width:'+progW+'%;background:'+progC+'"></div></div><div class="kpi-bottom"><div class="kpi-bottom-item"><span class="kpi-bottom-lbl">ПЛАН</span><span class="kpi-bottom-val" style="color:var(--white)">'+fmt(plan)+'</span></div><div class="kpi-divider"></div><div class="kpi-bottom-item" style="text-align:center"><span class="kpi-bottom-lbl">ФАКТ</span><span class="kpi-bottom-val" style="color:'+pctColor(factPct)+'">'+fmt(fact)+'</span></div></div></div>';
+// Д49-редизайн: премиум-стиль — крупная сумма, тренд-бейдж в углу (как на референсе), компактнее
+if(!plan)return'<div class="kpi-card '+color+'"><div class="kpi-label">'+label+'</div><div class="kpi-forecast-main" style="font-size:22px">'+fmt(fact)+'</div><div style="font-size:10px;font-weight:700;color:var(--text);opacity:.5;margin-top:2px">факт</div></div>';
+const trendColor=fcPct>=100?'#38ffb0':fcPct>=80?'#ffc847':'#ff4d6d';
+const trendBg=fcPct>=100?'rgba(56,255,176,0.14)':fcPct>=80?'rgba(255,200,71,0.14)':'rgba(255,77,109,0.14)';
+return'<div class="kpi-card '+color+'">'+
+'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">'+
+'<div class="kpi-label" style="margin-bottom:0">'+label+'</div>'+
+'<div style="font-size:11px;font-weight:800;color:'+trendColor+';background:'+trendBg+';padding:3px 9px;border-radius:20px;white-space:nowrap;letter-spacing:.2px">'+fcPct+'%</div>'+
+'</div>'+
+'<div class="kpi-forecast-main" style="font-size:24px">'+fmt(forecast)+'</div>'+
+'<div style="font-size:10px;font-weight:600;color:var(--text);opacity:.45;margin-bottom:12px">прогноз</div>'+
+'<div class="kpi-prog-track"><div class="kpi-prog-fill" style="width:'+progW+'%;background:linear-gradient(90deg,'+progC+'99,'+progC+')"></div></div>'+
+'<div class="kpi-bottom" style="margin-top:10px">'+
+'<div class="kpi-bottom-item"><span class="kpi-bottom-lbl">ПЛАН</span><span class="kpi-bottom-val" style="color:var(--white)">'+fmt(plan)+'</span></div>'+
+'<div class="kpi-divider"></div>'+
+'<div class="kpi-bottom-item" style="text-align:center"><span class="kpi-bottom-lbl">ФАКТ</span><span class="kpi-bottom-val" style="color:'+pctColor(factPct)+'">'+fmt(fact)+'</span></div>'+
+'</div>'+
+'</div>';
 }
 
 let homeNetFilter='all';
@@ -1185,49 +1201,82 @@ return shops.reduce((s,sh)=>s+(sh[m.key]?.fact||0),0);
 });
 const hasData=values.map(v=>v>0);
 const realValues=values.filter((v,i)=>hasData[i]);
-// Д44-фикс: растягиваем шкалу от МИНИМУМА (не от нуля) — тогда рост/падение реально видны
 const maxVal=Math.max(...realValues,1);
 const minVal=realValues.length?Math.min(...realValues):0;
-const range=Math.max(maxVal-minVal,maxVal*0.05); // защита от деления на 0 при одинаковых значениях
-// Тренд: сравниваем последнее значение с первым реальным
+const range=Math.max(maxVal-minVal,maxVal*0.08);
 const firstReal=realValues[0]||0;
 const lastReal=realValues[realValues.length-1]||0;
 const trendUp=lastReal>=firstReal;
 const trendPct=firstReal>0?Math.round((lastReal-firstReal)/firstReal*100):0;
-let html='<div class="chart-card" style="padding:16px 18px;position:relative;overflow:hidden">';
-html+='<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,'+m.color+'00,'+m.color+','+m.color+'00)"></div>';
-html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+
+let html='<div class="chart-card" style="padding:18px 20px;position:relative;overflow:hidden">';
+html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">';
 html+='<div style="font-size:12px;font-weight:800;color:var(--white);text-transform:uppercase;letter-spacing:.6px">'+m.label+'</div>';
 if(realValues.length>=2){
-const trendColor=trendUp?'var(--accent3)':'var(--red)';
+const trendColor=trendUp?'#38ffb0':'#ff4d6d';
 const trendIcon=trendUp?'↑':'↓';
-html+='<div style="font-size:11px;font-weight:800;color:'+trendColor+';display:flex;align-items:center;gap:2px">'+trendIcon+' '+Math.abs(trendPct)+'%</div>';
+const trendBg=trendUp?'rgba(56,255,176,0.14)':'rgba(255,77,109,0.14)';
+html+='<div style="font-size:11px;font-weight:800;color:'+trendColor+';background:'+trendBg+';padding:3px 9px;border-radius:20px;display:flex;align-items:center;gap:2px">'+trendIcon+' '+Math.abs(trendPct)+'%</div>';
 }
 html+='</div>';
-html+='<div style="display:flex;gap:4px;align-items:flex-end;height:100px;position:relative">';
-last12.forEach((h,i)=>{
-const v=values[i];
-const has=hasData[i];
-// Высота относительно диапазона (min..max), а не абсолютного нуля — visually amplifies differences
-const barH=has?Math.max(Math.round((v-minVal)/range*78)+18,18):0;
-html+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0">';
-if(has){
-html+='<div style="font-size:9px;font-weight:800;color:var(--white);margin-bottom:4px;white-space:nowrap;line-height:1">'+fmtShort(v)+'</div>';
-const gradId='grad_'+m.key+'_'+i;
-html+='<svg width="100%" height="'+barH+'" style="max-width:22px;overflow:visible" viewBox="0 0 22 '+barH+'" preserveAspectRatio="none">';
-html+='<defs><linearGradient id="'+gradId+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+m.color+'" stop-opacity="1"/><stop offset="100%" stop-color="'+m.color+'" stop-opacity="0.55"/></linearGradient></defs>';
-html+='<rect x="0" y="0" width="22" height="'+barH+'" rx="4" fill="url(#'+gradId+')"/>';
+
+// ── Линейный график (SVG polyline + область заливки) ──
+const chartW=600,chartH=110,padTop=22,padBottom=18;
+const plotH=chartH-padTop-padBottom;
+const n=last12.length;
+const stepX=n>1?chartW/(n-1):chartW;
+
+// Считаем точки только по реальным данным, интерполируя пропуски визуально как разрыв
+const points=values.map((v,i)=>{
+if(!hasData[i])return null;
+const px=i*stepX;
+const py=padTop+plotH-((v-minVal)/range*plotH);
+return{x:px,y:py,v,label:(last12[i].label||'').split(' ')[0].slice(0,3)};
+});
+
+// Строим path только по непрерывным участкам с данными
+let pathD='';let areaD='';let started=false;
+const validPoints=points.filter(p=>p!==null);
+validPoints.forEach((p,idx)=>{
+if(idx===0){pathD+='M'+p.x+','+p.y;areaD+='M'+p.x+','+chartH+' L'+p.x+','+p.y;}
+else{pathD+=' L'+p.x+','+p.y;areaD+=' L'+p.x+','+p.y;}
+});
+if(validPoints.length){
+const lastP=validPoints[validPoints.length-1];
+areaD+=' L'+lastP.x+','+chartH+' Z';
+}
+
+const gradId='linegrad_'+m.key;
+const areaGradId='areagrad_'+m.key;
+
+html+='<svg width="100%" height="'+chartH+'" viewBox="0 0 '+chartW+' '+chartH+'" preserveAspectRatio="none" style="overflow:visible;display:block">';
+html+='<defs>';
+html+='<linearGradient id="'+areaGradId+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+m.color+'" stop-opacity="0.35"/><stop offset="100%" stop-color="'+m.color+'" stop-opacity="0"/></linearGradient>';
+html+='</defs>';
+if(areaD)html+='<path d="'+areaD+'" fill="url(#'+areaGradId+')"/>';
+if(pathD)html+='<path d="'+pathD+'" fill="none" stroke="'+m.color+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+// Точки на графике
+validPoints.forEach(p=>{
+html+='<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="'+m.color+'"/>';
+html+='<circle cx="'+p.x+'" cy="'+p.y+'" r="2" fill="#0a0518"/>';
+});
 html+='</svg>';
+
+// Подписи значений над точками (HTML overlay поверх SVG через flex, приблизительно позиционируем)
+html+='<div style="display:flex;justify-content:space-between;margin-top:-4px">';
+points.forEach(p=>{
+if(p){
+html+='<div style="font-size:9px;font-weight:800;color:var(--white);text-align:center;flex:1">'+fmtShort(p.v)+'</div>';
 }else{
-html+='<div style="height:13px"></div>';
-html+='<div style="width:100%;max-width:22px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px"></div>';
+html+='<div style="flex:1"></div>';
 }
-html+='</div>';
 });
 html+='</div>';
-html+='<div style="display:flex;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05)">';
+
+// Подписи месяцев
+html+='<div style="display:flex;justify-content:space-between;margin-top:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05)">';
 last12.forEach(h=>{
-html+='<div style="flex:1;font-size:8px;font-weight:600;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden">'+(h.label||'').split(' ')[0].slice(0,3)+'</div>';
+html+='<div style="font-size:8px;font-weight:600;color:var(--muted);text-align:center;flex:1;white-space:nowrap;overflow:hidden">'+(h.label||'').split(' ')[0].slice(0,3)+'</div>';
 });
 html+='</div>';
 html+='</div>';
@@ -1557,44 +1606,70 @@ const hasData=values.map(v=>v>0);
 const realValues=values.filter((v,i)=>hasData[i]);
 const maxVal=Math.max(...realValues,1);
 const minVal=realValues.length?Math.min(...realValues):0;
-const range=Math.max(maxVal-minVal,maxVal*0.05);
+const range=Math.max(maxVal-minVal,maxVal*0.08);
 const firstReal=realValues[0]||0;
 const lastReal=realValues[realValues.length-1]||0;
 const trendUp=lastReal>=firstReal;
 const trendPct=firstReal>0?Math.round((lastReal-firstReal)/firstReal*100):0;
-let html='<div class="chart-card" style="padding:16px 18px;position:relative;overflow:hidden">';
-html+='<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,'+m.color+'00,'+m.color+','+m.color+'00)"></div>';
-html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+
+let html='<div class="chart-card" style="padding:18px 20px;position:relative;overflow:hidden">';
+html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">';
 html+='<div style="font-size:12px;font-weight:800;color:var(--white);text-transform:uppercase;letter-spacing:.6px">'+m.label+'</div>';
 if(realValues.length>=2){
-const trendColor=trendUp?'var(--accent3)':'var(--red)';
+const trendColor=trendUp?'#38ffb0':'#ff4d6d';
 const trendIcon=trendUp?'↑':'↓';
-html+='<div style="font-size:11px;font-weight:800;color:'+trendColor+';display:flex;align-items:center;gap:2px">'+trendIcon+' '+Math.abs(trendPct)+'%</div>';
+const trendBg=trendUp?'rgba(56,255,176,0.14)':'rgba(255,77,109,0.14)';
+html+='<div style="font-size:11px;font-weight:800;color:'+trendColor+';background:'+trendBg+';padding:3px 9px;border-radius:20px;display:flex;align-items:center;gap:2px">'+trendIcon+' '+Math.abs(trendPct)+'%</div>';
 }
 html+='</div>';
-html+='<div style="display:flex;gap:4px;align-items:flex-end;height:100px;position:relative">';
-last12.forEach((h,i)=>{
-const v=values[i];
-const has=hasData[i];
-const barH=has?Math.max(Math.round((v-minVal)/range*78)+18,18):0;
-html+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0">';
-if(has){
-html+='<div style="font-size:9px;font-weight:800;color:var(--white);margin-bottom:4px;white-space:nowrap;line-height:1">'+fmtShort(v)+'</div>';
-const gradId='pgrad_'+m.key+'_'+i;
-html+='<svg width="100%" height="'+barH+'" style="max-width:22px;overflow:visible" viewBox="0 0 22 '+barH+'" preserveAspectRatio="none">';
-html+='<defs><linearGradient id="'+gradId+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+m.color+'" stop-opacity="1"/><stop offset="100%" stop-color="'+m.color+'" stop-opacity="0.55"/></linearGradient></defs>';
-html+='<rect x="0" y="0" width="22" height="'+barH+'" rx="4" fill="url(#'+gradId+')"/>';
+
+const chartW=600,chartH=110,padTop=22,padBottom=18;
+const plotH=chartH-padTop-padBottom;
+const n=last12.length;
+const stepX=n>1?chartW/(n-1):chartW;
+
+const points=values.map((v,i)=>{
+if(!hasData[i])return null;
+const px=i*stepX;
+const py=padTop+plotH-((v-minVal)/range*plotH);
+return{x:px,y:py,v};
+});
+
+let pathD='';let areaD='';
+const validPoints=points.filter(p=>p!==null);
+validPoints.forEach((p,idx)=>{
+if(idx===0){pathD+='M'+p.x+','+p.y;areaD+='M'+p.x+','+chartH+' L'+p.x+','+p.y;}
+else{pathD+=' L'+p.x+','+p.y;areaD+=' L'+p.x+','+p.y;}
+});
+if(validPoints.length){
+const lastP=validPoints[validPoints.length-1];
+areaD+=' L'+lastP.x+','+chartH+' Z';
+}
+
+const areaGradId='pareagrad_'+m.key+'_'+staffKey;
+
+html+='<svg width="100%" height="'+chartH+'" viewBox="0 0 '+chartW+' '+chartH+'" preserveAspectRatio="none" style="overflow:visible;display:block">';
+html+='<defs>';
+html+='<linearGradient id="'+areaGradId+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+m.color+'" stop-opacity="0.35"/><stop offset="100%" stop-color="'+m.color+'" stop-opacity="0"/></linearGradient>';
+html+='</defs>';
+if(areaD)html+='<path d="'+areaD+'" fill="url(#'+areaGradId+')"/>';
+if(pathD)html+='<path d="'+pathD+'" fill="none" stroke="'+m.color+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+validPoints.forEach(p=>{
+html+='<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="'+m.color+'"/>';
+html+='<circle cx="'+p.x+'" cy="'+p.y+'" r="2" fill="#0a0518"/>';
+});
 html+='</svg>';
-}else{
-html+='<div style="height:13px"></div>';
-html+='<div style="width:100%;max-width:22px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px"></div>';
-}
-html+='</div>';
+
+html+='<div style="display:flex;justify-content:space-between;margin-top:-4px">';
+points.forEach(p=>{
+if(p){html+='<div style="font-size:9px;font-weight:800;color:var(--white);text-align:center;flex:1">'+fmtShort(p.v)+'</div>';}
+else{html+='<div style="flex:1"></div>';}
 });
 html+='</div>';
-html+='<div style="display:flex;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05)">';
+
+html+='<div style="display:flex;justify-content:space-between;margin-top:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05)">';
 last12.forEach(h=>{
-html+='<div style="flex:1;font-size:8px;font-weight:600;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden">'+(h.label||'').split(' ')[0].slice(0,3)+'</div>';
+html+='<div style="font-size:8px;font-weight:600;color:var(--muted);text-align:center;flex:1;white-space:nowrap;overflow:hidden">'+(h.label||'').split(' ')[0].slice(0,3)+'</div>';
 });
 html+='</div>';
 html+='</div>';
